@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync dependencies (uv only)
+        run: uv sync
+
+      - name: Lint (ruff — zero violations)
+        run: uv run ruff check
+
+      - name: Test with coverage (fail under 85%)
+        run: uv run pytest --cov
