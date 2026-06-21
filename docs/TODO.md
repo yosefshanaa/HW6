@@ -69,7 +69,8 @@ code written yet.
   (`fail_under = 85`) in `pyproject.toml`.
 - [x] **P0** Confirm `.gitignore` lists `.env`, `credentials.json`, `token.json`, `*.pem`, `*.key`
   (already present) and that `uv.lock` is **not** ignored.
-- [ ] **P1** Add a CI workflow: `uv sync` → `ruff check` → `uv run pytest --cov`.
+- [x] **P1** Add a CI workflow: `uv sync` → `ruff check` → `uv run pytest --cov`
+  (`.github/workflows/ci.yml`, uv-only).
 
 **DoD:** `uv sync` succeeds; `ruff check` clean on the skeleton; empty test run green; tree matches
 `PLAN.md`.
@@ -330,7 +331,7 @@ config values.
 - [ ] **P0** Research/analysis: parameter-sensitivity experiments, learning curves, charts, logs,
   screenshots (guidelines §9).
 - [ ] **P0** LLM **cost analysis** (input/output tokens, cost per model, per-series estimate).
-- [ ] **P0** **Prompt book** (`prompts/`) documenting significant prompts.
+- [x] **P0** **Prompt book** (`prompts/PROMPT_BOOK.md`) documenting significant prompts.
 - [ ] **P1** ISO/IEC 25010 quality-attribute mapping in the report.
 
 **DoD:** README is a complete manual; the scientific report covers Dec-POMDP, experiments, charts,
@@ -345,39 +346,63 @@ cost analysis, and prompt book.
 > Aligned to `software_submission_guidelines-V3` §17 / §20.9.
 
 **Docs & structure**
-- [ ] **P0** `README.md` (user-manual level) at repo root.
-- [ ] **P0** `docs/` has PRD, PLAN, TODO + a `PRD_*.md` per major mechanism.
-- [ ] **P0** Architecture documented with clear diagrams; prompt book present.
+- [x] **P0** `README.md` (user-manual level) at repo root.
+- [x] **P0** `docs/` has PRD, PLAN, TODO + a `PRD_*.md` per major mechanism.
+- [x] **P0** Architecture documented (C4 text views + ASCII diagrams in PLAN); prompt book present.
 
 **Architecture & code**
-- [ ] **P0** SDK boundary: all business logic via `sdk/sdk.py`.
-- [ ] **P0** OOP, no duplication, mixins/inheritance where appropriate.
-- [ ] **P0** API Gatekeeper for every external call; rate limits from config; queue management.
-- [ ] **P0** Files ≤150 code lines; docstrings + *why* comments; consistent naming.
+- [x] **P0** SDK boundary: all business logic via `sdk/sdk.py`.
+- [x] **P0** OOP, no duplication, Template-Method `Strategy`, shared MCP tools/builder.
+- [x] **P0** API Gatekeeper for every external call; rate limits from config; queue/backpressure.
+- [x] **P0** Files ≤150 code lines (largest 127); docstrings + *why* comments; consistent naming.
 
 **Tests & quality**
-- [ ] **P0** TDD; coverage ≥85%; Ruff zero violations; edge cases + error handling documented;
-  automated test reports.
+- [x] **P0** TDD; coverage **97%** (≥85%); Ruff zero violations; edge cases + error handling tested;
+  `pytest --cov` report.
 
 **Config & security**
-- [ ] **P0** Config separate from code, versioned; `.env-example` with dummies; no API keys/secrets
+- [x] **P0** Config separate from code, versioned; `.env-example` with dummies; no API keys/secrets
   in code; `.gitignore` updated; `uv`-only; `uv.lock` + `pyproject.toml` present.
 
 **Research & viz**
-- [ ] **P0** Parameter study, analysis notebook, charts; quality graphs/screenshots; cost analysis +
-  optimization notes.
+- [~] **P0** Cost analysis ([`COST_ANALYSIS.md`](COST_ANALYSIS.md)) + experiments
+  ([`EXPERIMENTS.md`](EXPERIMENTS.md)) + ISO map ([`QUALITY_MAPPING.md`](QUALITY_MAPPING.md))
+  authored. **Pending:** populated charts/notebook + real token costs (needs an LLM run) +
+  screenshots.
 
 **Extensibility & standards**
-- [ ] **P1** Extension points; professional Python packaging; ISO/IEC 25010 compliance; tidy Git
-  history, license, attribution, deployment instructions.
+- [~] **P1** Professional packaging (`pyproject.toml`, hatchling, console scripts), MIT license, tidy
+  Git history, deployment notes (PLAN §18). ISO/IEC 25010 mapping in `QUALITY_MAPPING.md`.
+  **Pending:** plugin extension points; attribution list.
 
 **Assignment-specific**
-- [ ] **P0** Two independent MCP servers; servers don't host the LLM; HTTPS + token (cloud).
-- [ ] **P0** 6 clean sub-games (Technical-Loss rerun proven); JSON-only email to
-  `rmisegal+uoh26b@gmail.com`.
-- [ ] **P0** Internal report JSON (§9.1); (bonus) matching inter-group JSON (§9.2) with
-  `mutual_agreement: true`.
-- [ ] **P1** All PRD §21 placeholders filled (team, students, repo, URLs, seed, provider).
+- [~] **P0** Two independent MCP servers ✅; servers don't host the LLM ✅; **HTTPS + token is the
+  cloud stage** (external).
+- [~] **P0** 6 clean sub-games + Technical-Loss rerun ✅ (tested); JSON-only report body ✅ (tested,
+  mocked send). **Live email** to `rmisegal+uoh26b@gmail.com` needs Gmail OAuth (external).
+- [x] **P0** Internal report JSON (§9.1) ✅; bonus inter-group JSON (§9.2) builder with
+  `mutual_agreement: true` ✅. *(Matching with a real partner is external.)*
+- [~] **P1** PRD §21 placeholders: `github_repo` ✅; **TODO** — team, students, real cloud URLs,
+  cloud provider, LLM provider/model.
 
-**DoD:** Every P0 box above is checked; the repo builds, lints, tests (≥85%), and runs a full series
-that emails a valid JSON-only report.
+**DoD:** Every **local** P0 box above is checked; the repo builds, lints, tests (97% ≥85%), and runs
+a full autonomous series that emits a valid JSON-only report. Remaining `[~]` items are gated on the
+external inputs in [§External Inputs Needed](#external-inputs-needed).
+
+---
+
+## External Inputs Needed
+
+Everything still unchecked above is blocked on **external** inputs that cannot be invented locally.
+Provide these to finish the corresponding phases:
+
+| # | Input needed | Unblocks |
+|---|---|---|
+| 1 | **Team name + student names/IDs** | `report.group_name`/`students`; PRD §21; report JSON |
+| 2 | **Google account + OAuth approval** (Desktop Client ID → `credentials.json`; approve live send) | Phase 10 live email to `rmisegal+uoh26b@gmail.com` |
+| 3 | **Cloud provider + credentials** (e.g., Prefect Cloud) and **`MCP_AUTH_TOKEN`** | Phase 15 HTTPS deploy + live bearer enforcement; real `cop_mcp_url`/`thief_mcp_url` |
+| 4 | **Partner team** name + their 4 MCP URLs + token (out of band) | Phase 12 bonus match + matching §9.2 report |
+| 5 | **LLM provider/model + API key** (in `.env` as `LLM_API_KEY`) | LLM-driven agents; real token **cost analysis** numbers |
+
+Nothing above is faked: the code paths exist and are tested with mocks; only the real
+accounts/URLs/keys are missing.
