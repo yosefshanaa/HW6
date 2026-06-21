@@ -21,6 +21,13 @@ def test_play_and_report_writes_and_returns_valid_report(config, tmp_path):
     assert json.loads(written[0].read_text(encoding="utf-8"))["totals"] == report["totals"]
 
 
+def test_gmail_reporter_factory_uses_config(config):
+    rep = CopThiefSDK(config).gmail_reporter()
+    assert rep.recipient == "rmisegal+uoh26b@gmail.com"
+    assert rep.scopes == ["https://www.googleapis.com/auth/gmail.send"]
+    assert "https://www.googleapis.com/auth/calendar" not in rep.scopes
+
+
 def test_play_and_report_sends_via_mocked_reporter(config, tmp_path):
     sent: dict = {}
     gk = ApiGatekeeper({"requests_per_minute": 60}, sleep=lambda _s: None, clock=lambda: 0.0)

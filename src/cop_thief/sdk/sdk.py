@@ -16,6 +16,7 @@ from cop_thief.orchestrator.orchestrator import Orchestrator
 from cop_thief.reporting.gmail_reporter import GmailReporter
 from cop_thief.reporting.report_builder import build_internal_report, validate_report
 from cop_thief.shared.config import Config, load_config
+from cop_thief.shared.gatekeeper import ApiGatekeeper
 from cop_thief.shared.version import __version__
 
 
@@ -46,6 +47,17 @@ class CopThiefSDK:
         report = build_internal_report(self._config, results)
         validate_report(report, ReportType.INTERNAL)
         return report
+
+    def gmail_reporter(self) -> GmailReporter:
+        """Build a Gmail reporter from config (recipient, files, least-priv scope)."""
+        gatekeeper = ApiGatekeeper.from_config(self._config, "gmail")
+        return GmailReporter(
+            self._config.get("report.recipient"),
+            gatekeeper,
+            credentials_file=self._config.get("report.credentials_file", "credentials.json"),
+            token_file=self._config.get("report.token_file", "token.json"),
+            scopes=self._config.get("report.gmail_scopes"),
+        )
 
     def send_report(self, report: dict[str, Any], reporter: GmailReporter) -> str:
         """Send a report via the given reporter; return the message id."""

@@ -37,7 +37,12 @@ Plays a full clean series of 6 sub-games with the baseline heuristic agents and 
 ```bash
 uv run cop-thief
 uv run cop-thief --results-dir results        # also writes logs + report.json there
+uv run cop-thief --send                       # also email the report (needs credentials.json)
 ```
+
+`--send` emails the JSON-only report to `report.recipient` via the Gmail API when
+`credentials.json` is present; without it, the run logs a warning and writes the report without
+sending (stdout stays pure JSON). See [Reporting](#reporting-gmail).
 
 Each run writes, under `results/<timestamp>/`:
 - `sub_game_<n>.jsonl` — a timestamped record of every turn (observation, message, action,

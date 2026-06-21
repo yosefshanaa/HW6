@@ -230,8 +230,9 @@ report validates against schema.
   Test user; least-privilege scope); produce `credentials.json` + `token.json` (never committed).
   *(code path ready; real OAuth needs the team's Google account — steps in PRD_gmail_reporting.md.)*
 - [x] **P0** `reporting/gmail_reporter.py` — send one email; **body = JSON only**; via gatekeeper.
-- [x] **P0** Wire send into the pipeline after 6 clean sub-games (`SDK.play_and_report(reporter=…)`
-  → `report.recipient`). CLI default is no-send (no creds present).
+- [x] **P0** Wire send into the pipeline after 6 clean sub-games: `uv run cop-thief --send` builds
+  `SDK.gmail_reporter()` and emails `report.recipient` when `credentials.json` exists (graceful
+  warn-and-skip otherwise); default run is no-send.
 - [x] **P0** Gmail-mocked tests (no real send in CI). *(one manual live smoke test still pending.)*
 - [x] **P1** Document why Calendar scope is not needed (least-privilege `gmail.send`).
 
