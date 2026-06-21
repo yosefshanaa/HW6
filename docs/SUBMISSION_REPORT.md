@@ -49,7 +49,7 @@ See [`README.md`](../README.md) for the full manual.
 
 | Gate | Result |
 |---|---|
-| Tests | **81 passed** (`uv run pytest`) |
+| Tests | **85 passed** (`uv run pytest`) |
 | Coverage | **97%** (target ≥85%, `fail_under=85`) |
 | Lint | **0** violations (`uv run ruff check`) |
 | File size | all ≤ **150** code lines (largest 127) |

@@ -100,7 +100,8 @@ landing on the Thief; the Thief wins by surviving 25 moves. Scoring: Cop win →
 
 ## Reporting (Gmail)
 
-At the end of 6 clean sub-games the report is emailed to `rmisegal+uoh26b@gmail.com` with a
+At the end of 6 clean sub-games the report is built and printed; with `uv run cop-thief --send`
+(and a `credentials.json` present) it is also emailed to `rmisegal+uoh26b@gmail.com` with a
 **JSON-only** body via the Gmail API (least-privilege `gmail.send` scope). The send path is
 mockable and fully tested without credentials; the real OAuth setup (Desktop app, External
 audience + Test user, `credentials.json`/`token.json`) is documented in
@@ -122,7 +123,9 @@ uv lock                       # refresh the lockfile
 src/cop_thief/    domain · engine · orchestrator · agents · mcp · reporting · gui · shared · sdk
 tests/            unit + integration (mirrors src/)
 config/           config.yaml · rate_limits.json · logging_config.json
-docs/             PRD · PLAN · TODO · per-mechanism PRDs
+docs/             PRD · PLAN · TODO · per-mechanism PRDs · SUBMISSION_REPORT · EXPERIMENTS · COST_ANALYSIS · QUALITY_MAPPING · examples/
+prompts/          PROMPT_BOOK · turn_templates
+notebooks/        parameter_sweep.py (local experiment)
 results/          per-series logs + report.json (git-ignored)
 ```
 
@@ -131,12 +134,26 @@ external API call goes through the **API Gatekeeper**.
 
 ## Status & remaining inputs
 
-The local pipeline is complete and verified (81 tests, 97% coverage, ruff clean, autonomous
+The local pipeline is complete and verified (85 tests, 97% coverage, ruff clean, autonomous
 JSON-only report). See [`docs/SUBMISSION_REPORT.md`](docs/SUBMISSION_REPORT.md) for a one-page
 overview. Items still gated on **external** accounts/credentials (live Gmail send, cloud HTTPS
 deploy, partner bonus match, team/student details, LLM key) are listed in
 [`docs/TODO.md` §External Inputs Needed](docs/TODO.md#external-inputs-needed) — these are documented,
 not faked.
+
+## Documentation
+
+| Doc | What |
+|---|---|
+| [`docs/SUBMISSION_REPORT.md`](docs/SUBMISSION_REPORT.md) | One-page submission overview |
+| [`docs/PRD.md`](docs/PRD.md) · [`PLAN.md`](docs/PLAN.md) · [`TODO.md`](docs/TODO.md) | Requirements · architecture/ADRs · task tracking |
+| `docs/PRD_*.md` | Per-mechanism PRDs (engine, MCP, strategy, partial-observability, Gmail, bonus, GUI/logs) |
+| [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) | Real local parameter-sensitivity study |
+| [`docs/COST_ANALYSIS.md`](docs/COST_ANALYSIS.md) | LLM token cost model + optimization |
+| [`docs/QUALITY_MAPPING.md`](docs/QUALITY_MAPPING.md) | ISO/IEC 25010 evidence map |
+| [`prompts/PROMPT_BOOK.md`](prompts/PROMPT_BOOK.md) · [`turn_templates.md`](prompts/turn_templates.md) | Prompt log + LLM turn templates |
+| [`docs/examples/`](docs/examples/) | Sample report + replay excerpt |
+| [`SHARED_MATCH_RULES.md`](SHARED_MATCH_RULES.md) | Shared spec for the inter-group bonus match |
 
 ## License
 
