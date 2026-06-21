@@ -161,7 +161,9 @@ an illegal action; optional Q-table trains on a toy run if implemented.
   `get_match_status`, `health_check`.
 - [x] **P0** Servers do **not** host the LLM; they wrap the referee view + validation only.
 - [x] **P0** Schema-validate all tool payloads (reject, don't crash).
-- [ ] **P1** Bearer-token auth middleware (token from env) — used in cloud stage (Phase 15).
+- [~] **P1** Bearer-token auth (`mcp/auth.py`, token from `MCP_AUTH_TOKEN`) — pure check
+  implemented + unit-tested; server logs enable/disable. Live per-request enforcement runs in the
+  cloud stage (Phase 15).
 - [x] **P0** Contract tests for each tool payload + in-process client↔server round-trip.
 
 **DoD:** Both servers start on localhost (`:8001`/`:8002`); `health_check` returns version;

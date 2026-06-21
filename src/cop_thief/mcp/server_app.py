@@ -12,12 +12,21 @@ from typing import Any
 from cop_thief.engine.observation_service import random_start
 from cop_thief.engine.referee import Referee
 from cop_thief.mcp import tools
+from cop_thief.mcp.auth import load_expected_token
+from cop_thief.shared.logging_setup import get_logger
 
 
 def build_app(role: str, config) -> Any:
     """Build a FastMCP app exposing the six tools for ``role``."""
     from fastmcp import FastMCP  # lazy: optional dependency
 
+    # Bearer-token auth: enforced per request via cop_thief.mcp.auth.check_bearer
+    # when MCP_AUTH_TOKEN is set in the environment (required for cloud/HTTPS).
+    expected_token = load_expected_token(config)
+    get_logger("mcp").info(
+        "MCP %s server token auth: %s", role,
+        "ENABLED" if expected_token else "disabled (no MCP_AUTH_TOKEN)",
+    )
     referee = Referee.from_config(config)
     cop, thief = random_start(referee.grid_size, referee.vision_radius, random.Random(config.get("seed")))
     referee.reset(cop, thief)
