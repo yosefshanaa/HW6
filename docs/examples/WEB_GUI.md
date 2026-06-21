@@ -1,7 +1,10 @@
 # Browser GUI evidence
 
 The browser GUI (`uv run cop-thief-web-gui`) renders a **self-contained, local** HTML page — no
-network, no CDN, no external services. Data is embedded directly in the page as JSON.
+network, no CDN, no external services. Data is embedded directly in the page as JSON. The styling is
+a **noir tactical surveillance terminal**: phosphor-green CRT with scanlines, cyan = Cop sweep,
+amber-red = Thief, HUD corner-brackets, coordinate rulers, and a live "comms feed". All offline
+(monospace system fonts, pure CSS/JS).
 
 ## Curated sample
 
@@ -35,7 +38,7 @@ uv run cop-thief-web-gui --replay results/<ts>/sub_game_1.jsonl \
 
 - **True board** — full state (C=cop, T=thief, ▦=barrier).
 - **Fog-of-war** — the acting agent's partial view (`?` = beyond its vision radius).
-- **Sub-game selector** + **move slider** + **▶ Play** to step/animate the series.
+- **Sub-game selector** + **move slider** + **⏮ Prev / ▶ Run / Next ⏭** + **speed** (0.5×/1×/2×).
 - **Winner / per-sub-game scores** and **series totals**.
 - **Message/action log** (the natural-language `message`s, including the Thief's bluffs).
 

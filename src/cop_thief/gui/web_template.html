@@ -2,84 +2,253 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cop &amp; Thief — Web GUI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cop &amp; Thief — Tactical Replay</title>
 <style>
-  body{font-family:system-ui,Segoe UI,sans-serif;margin:1.5rem;background:#0f1320;color:#e8ecf4}
-  h1{font-size:1.25rem;margin:.2rem 0} h3{margin:.2rem 0 .5rem}
-  .row{display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start}
-  .panel{background:#1a2032;border:1px solid #2a3350;border-radius:10px;padding:1rem}
-  table{border-collapse:collapse} td{width:36px;height:36px;text-align:center;border:1px solid #2a3350;font-weight:700}
-  .C{background:#2563eb;color:#fff}.T{background:#dc2626;color:#fff}.B{background:#0a0d16;color:#5b6788}
-  .E{background:#0c1322}.U{background:#1b2236;color:#55617f}
-  .controls{margin:1rem 0;display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
-  input[type=range]{width:260px} select,button{font-size:1rem;background:#243049;color:#e8ecf4;border:1px solid #3a4a6b;border-radius:6px;padding:.25rem .5rem}
-  button{cursor:pointer} .scores{font-size:1.1rem;margin:.5rem 0}
-  .log{max-height:160px;overflow:auto;font-family:ui-monospace,monospace;font-size:.82rem;line-height:1.5}
-  .muted{color:#8b96b3}
+  /* ── Noir tactical surveillance terminal · self-contained, offline ── */
+  :root{
+    --bg:#05080a; --panel:#0a1210; --panel2:#0b1714; --grid:#0e1d18;
+    --line:#163026; --line2:#1f4636;
+    --phos:#5dffae;            /* phosphor green */
+    --phosdim:#2f7a59;
+    --amber:#ffb454;
+    --cop:#36d3ff;             /* cop sweep (cyan) */
+    --thief:#ff556e;           /* thief (red) */
+    --ink:#bfe9d4; --muted:#577a68;
+    --mono:"JetBrains Mono","Cascadia Code","SFMono-Regular","Fira Code","DejaVu Sans Mono","Consolas",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--mono);color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 75% -20%, #0c1b16 0%, transparent 60%),
+      radial-gradient(900px 600px at 0% 120%, #0a1512 0%, transparent 55%),
+      linear-gradient(var(--bg),#04070a);
+    background-attachment:fixed;}
+  /* CRT scanlines + vignette overlay */
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+    mix-blend-mode:multiply;opacity:.5;animation:flick 6s steps(60) infinite}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+    box-shadow:inset 0 0 220px rgba(0,0,0,.85)}
+  @keyframes flick{0%,97%,100%{opacity:.5}98%{opacity:.62}}
+  .wrap{max-width:1120px;margin:0 auto;padding:1.4rem 1.25rem 3rem;position:relative;z-index:1}
+
+  /* Header readout bar */
+  header{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+    border:1px solid var(--line2);border-radius:6px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+    padding:.7rem 1rem;box-shadow:0 0 0 1px #04100b inset, 0 10px 30px rgba(0,0,0,.5);
+    animation:rise .5s both}
+  .brand{font-weight:700;letter-spacing:.28em;font-size:1rem;color:var(--phos);
+    text-shadow:0 0 10px rgba(93,255,174,.5)}
+  .brand b{color:var(--ink)} .brand .x{color:var(--muted);margin:0 .35em}
+  .tag{color:var(--muted);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase}
+  .grow{flex:1}
+  .readout{display:flex;gap:1.1rem;font-size:.72rem;letter-spacing:.12em;color:var(--muted)}
+  .readout b{color:var(--amber);font-weight:600}
+  .rec{display:inline-flex;align-items:center;gap:.4rem;color:var(--thief);font-size:.72rem;letter-spacing:.18em}
+  .rec i{width:9px;height:9px;border-radius:50%;background:var(--thief);box-shadow:0 0 10px var(--thief);animation:blink 1.1s infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  /* Console rail */
+  .rail{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:1rem 0 1.3rem;
+    border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:.65rem .85rem;animation:rise .5s .05s both}
+  .rail label{color:var(--muted);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:.45rem}
+  select{font:inherit;font-size:.82rem;color:var(--ink);background:var(--grid);border:1px solid var(--line2);
+    border-radius:4px;padding:.32rem .5rem}
+  button{font:inherit;font-size:.78rem;letter-spacing:.1em;color:var(--phos);background:var(--grid);
+    border:1px solid var(--line2);border-radius:4px;padding:.4rem .7rem;cursor:pointer;transition:.14s;text-transform:uppercase}
+  button:hover{border-color:var(--phos);box-shadow:0 0 12px rgba(93,255,174,.25);color:#eafff4}
+  button.run{color:#04140d;background:linear-gradient(180deg,var(--phos),var(--phosdim));border-color:transparent;font-weight:700}
+  input[type=range]{accent-color:var(--phos);width:230px}
+
+  /* Status line */
+  .status{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:.2rem 0 1rem;font-size:.85rem;animation:rise .5s .1s both}
+  .chip{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;padding:.2rem .55rem;border-radius:3px;border:1px solid var(--line2)}
+  .chip.cop{color:var(--cop);border-color:rgba(54,211,255,.4);background:rgba(54,211,255,.08);text-shadow:0 0 8px rgba(54,211,255,.4)}
+  .chip.thief{color:var(--thief);border-color:rgba(255,85,110,.4);background:rgba(255,85,110,.08);text-shadow:0 0 8px rgba(255,85,110,.4)}
+  .chip.win{color:var(--amber);border-color:rgba(255,180,84,.45);background:rgba(255,180,84,.08)}
+
+  /* HUD cards with corner brackets */
+  .grid{display:grid;grid-template-columns:auto auto 1fr;gap:1.1rem;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:6px;padding:1rem 1.1rem;animation:rise .55s both}
+  .card:nth-child(2){animation-delay:.06s}.card:nth-child(3){animation-delay:.12s}
+  .card::before,.card::after{content:"";position:absolute;width:12px;height:12px;border:2px solid var(--phosdim);opacity:.7}
+  .card::before{top:6px;left:6px;border-right:0;border-bottom:0}
+  .card::after{bottom:6px;right:6px;border-left:0;border-top:0}
+  .card h3{margin:.1rem 0 .85rem;font-size:.72rem;color:var(--phos);font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;text-shadow:0 0 8px rgba(93,255,174,.3)}
+
+  /* Tactical grid */
+  table{border-collapse:separate;border-spacing:3px}
+  th{color:var(--muted);font-weight:500;font-size:.64rem;width:40px;height:18px}
+  td.cell{width:40px;height:40px;text-align:center;font-size:1rem;font-weight:700;border-radius:4px;
+    background:var(--grid);border:1px solid var(--line);color:var(--muted);position:relative;
+    transition:transform .16s,box-shadow .18s,background .18s}
+  td.c{color:#06222b;background:radial-gradient(circle at 50% 35%,#9bedff,var(--cop));
+    border-color:transparent;box-shadow:0 0 14px rgba(54,211,255,.55)}
+  td.t{color:#2a0610;background:radial-gradient(circle at 50% 35%,#ffb1bd,var(--thief));
+    border-color:transparent;box-shadow:0 0 14px rgba(255,85,110,.5)}
+  td.b{color:var(--phosdim);background:repeating-linear-gradient(45deg,#14271f,#14271f 5px,#0d1a14 5px,#0d1a14 10px)}
+  td.u{background:#070d0b;border-color:#0c1813;color:transparent}
+  td.u::after{content:"·";color:#16241b}
+  td.hl{outline:2px solid var(--amber);outline-offset:1px;transform:translateY(-2px);box-shadow:0 0 16px rgba(255,180,84,.5)}
+  td.cap{animation:cap .85s ease-in-out infinite}
+  @keyframes cap{0%,100%{box-shadow:0 0 0 0 rgba(93,255,174,.7)}50%{box-shadow:0 0 0 7px rgba(93,255,174,0)}}
+  .legend{display:flex;gap:.9rem;flex-wrap:wrap;color:var(--muted);font-size:.68rem;letter-spacing:.06em;margin-top:.7rem}
+  .legend span{display:flex;align-items:center;gap:.4rem}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+
+  /* Intel + log */
+  .kv{line-height:1.95;font-size:.86rem} .kv b{color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.7rem}
+  .kv .msg{color:var(--amber)}
+  .totbar{display:flex;height:10px;border-radius:3px;overflow:hidden;border:1px solid var(--line2);margin:.5rem 0 .3rem}
+  .feed{max-height:220px;overflow:auto;font-size:.78rem;line-height:1.7}
+  .feed .ln::before{content:"› ";color:var(--phosdim)}
+  .feed .who{letter-spacing:.06em} .feed .cop{color:var(--cop)} .feed .thief{color:var(--thief)}
+  .feed .act{color:var(--phos)} .feed .mv{color:var(--muted)}
+  .cursor{display:inline-block;width:8px;height:1em;vertical-align:-2px;background:var(--phos);
+    box-shadow:0 0 8px var(--phos);animation:blink 1s steps(1) infinite;margin-left:2px}
+  footer{color:var(--muted);font-size:.72rem;letter-spacing:.1em;margin-top:1.6rem;text-align:center}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
-<h1>Cop &amp; Thief — Web GUI <span class="muted">(local replay)</span></h1>
-<div class="controls">
-  <label>Sub-game <select id="sub"></select></label>
-  <label>Move <input type="range" id="move" min="0" value="0"></label>
-  <span id="movelbl" class="muted"></span>
-  <button id="play">▶ Play</button>
+<div class="wrap">
+  <header>
+    <span class="brand">COP<span class="x">×</span>THIEF</span>
+    <span class="tag">tactical pursuit grid</span>
+    <span class="grow"></span>
+    <span class="readout">
+      <span>MODE <b id="mode">REPLAY</b></span>
+      <span>GRID <b id="gridr"></b></span>
+      <span class="rec"><i></i>REC</span>
+    </span>
+  </header>
+
+  <div class="rail">
+    <label>SUB-GAME <select id="sub"></select></label>
+    <button id="prev" title="previous move">⏮ Prev</button>
+    <button id="play" class="run" title="play / pause">▶ Run</button>
+    <button id="next" title="next move">Next ⏭</button>
+    <label>MOVE <input type="range" id="move" min="0" value="0"></label>
+    <span class="chip" id="movelbl"></span>
+    <span class="grow"></span>
+    <label>SPEED <select id="speed">
+      <option value="900">0.5×</option><option value="550" selected>1×</option><option value="250">2×</option>
+    </select></label>
+  </div>
+
+  <div class="status" id="scores"></div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>True board · ground truth</h3>
+      <table id="board"></table>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--cop)"></i>Cop</span>
+        <span><i class="sw" style="background:var(--thief)"></i>Thief</span>
+        <span><i class="sw" style="background:#14271f"></i>Barrier</span>
+        <span><i class="sw" style="background:var(--amber)"></i>Last move</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 id="fogtitle">Fog-of-war</h3>
+      <table id="fog"></table>
+      <div class="legend"><span><i class="sw" style="background:#070d0b;border:1px solid #16241b"></i>Unseen · beyond vision radius</span></div>
+    </div>
+    <div class="card">
+      <h3>Intel · this turn</h3>
+      <div class="kv" id="turn"></div>
+      <h3 style="margin-top:1.3rem">Series totals</h3>
+      <div class="totbar" id="totbar"></div>
+      <div class="kv" id="totals"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.1rem">
+    <h3>Comms feed · messages may bluff</h3>
+    <div class="feed" id="log"></div>
+  </div>
+
+  <footer>// Cop &amp; Thief · generated by cop-thief-web-gui · self-contained · no network</footer>
 </div>
-<div class="scores" id="scores"></div>
-<div class="row">
-  <div class="panel"><h3>True board</h3><table id="board"></table></div>
-  <div class="panel"><h3 id="fogtitle">Fog-of-war</h3><table id="fog"></table>
-    <p class="muted">C=cop · T=thief · ▦=barrier · ?=unseen</p></div>
-  <div class="panel"><h3>Turn</h3><div id="turn"></div>
-    <h3 style="margin-top:1rem">Series totals</h3><div id="totals"></div></div>
-</div>
-<div class="panel" style="margin-top:1rem"><h3>Message / action log</h3><div class="log" id="log"></div></div>
+
 <script>
 const DATA = __VIEW_MODEL__;
-const CLS = {C:'C', T:'T', '#':'B', '.':'E', '?':'U'};
-function draw(el, cells){
+const GLYPH = {C:'C', T:'T', '#':'▦', '.':'', '?':''};
+const CLS   = {C:'c', T:'t', '#':'b', '.':'e', '?':'u'};
+const $ = id => document.getElementById(id);
+function thc(t){ const th=document.createElement('th'); th.textContent=t; return th; }
+function draw(el, cells, hl, capture){
   el.innerHTML='';
-  for(const row of cells){
-    const tr=document.createElement('tr');
-    for(const ch of row){
+  const cols=cells[0].length;
+  const head=document.createElement('tr'); head.appendChild(thc(''));
+  for(let c=0;c<cols;c++) head.appendChild(thc(c));
+  el.appendChild(head);
+  cells.forEach((row,r)=>{
+    const tr=document.createElement('tr'); tr.appendChild(thc(r));
+    row.forEach((ch,c)=>{
       const td=document.createElement('td');
-      td.textContent=(ch==='.'||ch==='?')?'':(ch==='#'?'▦':ch);
-      td.className=CLS[ch]||'E'; tr.appendChild(td);
-    }
+      td.className='cell '+(CLS[ch]||'e'); td.textContent=GLYPH[ch]||'';
+      if(hl && hl[0]===r && hl[1]===c) td.classList.add('hl');
+      if(capture && ch==='C') td.classList.add('cap');
+      tr.appendChild(td);
+    });
     el.appendChild(tr);
-  }
+  });
 }
-const $=id=>document.getElementById(id);
 function curSub(){ return DATA.sub_games[+$('sub').value]; }
 function render(){
   const sg=curSub(); const mv=+$('move').value; const t=sg.turns[mv];
-  draw($('board'), t.board); draw($('fog'), t.fog);
-  $('fogtitle').textContent='Fog-of-war ('+t.role+')';
-  $('movelbl').textContent=(mv+1)+' / '+sg.turns.length;
-  $('turn').innerHTML='<b>role:</b> '+t.role+'<br><b>action:</b> '+JSON.stringify(t.action)+
-    '<br><b>message:</b> '+t.message;
-  $('scores').innerHTML='Sub-game '+sg.index+' — winner <b>'+sg.winner+'</b> '+
-    '(cop '+sg.cop_score+' / thief '+sg.thief_score+')';
-  $('log').innerHTML=sg.turns.slice(0,mv+1).map(x=>
-    '['+x.move+' '+x.role+'] '+x.message+'  →  '+JSON.stringify(x.action)).join('<br>');
-  $('totals').innerHTML='cop '+DATA.totals.cop+' / thief '+DATA.totals.thief;
+  const to=(t.action&&t.action.to)||null;
+  const cap=(mv===sg.turns.length-1 && sg.winner==='cop');
+  draw($('board'), t.board, to, cap); draw($('fog'), t.fog, null, false);
+  const cls=t.role==='cop'?'cop':'thief';
+  $('fogtitle').innerHTML='Fog-of-war · <span class="chip '+cls+'">'+t.role+'</span>';
+  $('movelbl').textContent='MOVE '+(mv+1)+' / '+sg.turns.length;
+  $('turn').innerHTML='<b>actor</b> <span class="chip '+cls+'">'+t.role+'</span><br>'+
+    '<b>action</b> '+JSON.stringify(t.action)+'<br><b>message</b> <span class="msg">“'+t.message+'”</span>';
+  const wcls=sg.winner==='cop'?'cop':(sg.winner==='thief'?'thief':'win');
+  $('scores').innerHTML='<b style="letter-spacing:.1em">SUB-GAME '+sg.index+'</b>'+
+    '<span class="chip '+wcls+'">winner · '+sg.winner+'</span>'+
+    '<span class="chip">cop '+sg.cop_score+'</span><span class="chip">thief '+sg.thief_score+'</span>';
+  $('log').innerHTML=sg.turns.slice(0,mv+1).map(x=>{
+    const c=x.role==='cop'?'cop':'thief';
+    return '<div class="ln"><span class="mv">'+x.move+'</span> '+
+      '<span class="who '+c+'">'+x.role+'</span> · '+x.message+
+      ' <span class="act">→ '+JSON.stringify(x.action)+'</span></div>';
+  }).join('')+'<span class="cursor"></span>';
+  $('log').scrollTop=$('log').scrollHeight;
+  const tot=DATA.totals, sum=Math.max(1,tot.cop+tot.thief);
+  $('totbar').innerHTML='<div style="width:'+(100*tot.cop/sum)+'%;background:var(--cop)"></div>'+
+    '<div style="width:'+(100*tot.thief/sum)+'%;background:var(--thief)"></div>';
+  $('totals').innerHTML='<b>cop</b> '+tot.cop+' &nbsp;&nbsp; <b>thief</b> '+tot.thief;
 }
 function initSub(){
+  $('gridr').textContent=DATA.grid_size[0]+'×'+DATA.grid_size[1];
   const sel=$('sub'); sel.innerHTML='';
   DATA.sub_games.forEach((sg,i)=>{ const o=document.createElement('option');
-    o.value=i; o.textContent='Sub-game '+sg.index+' ('+sg.winner+')'; sel.appendChild(o); });
+    o.value=i; o.textContent='#'+sg.index+'  ('+sg.winner+')'; sel.appendChild(o); });
 }
 function setMoveMax(){ const sg=curSub(); const m=$('move'); m.max=Math.max(0,sg.turns.length-1); m.value=0; }
-$('sub').addEventListener('change',()=>{ setMoveMax(); render(); });
-$('move').addEventListener('input',render);
+function step(d){ const m=$('move'); m.value=Math.min(+m.max,Math.max(0,+m.value+d)); render(); }
 let timer=null;
+function stop(){ if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Run';} }
+$('sub').addEventListener('change',()=>{ stop(); setMoveMax(); render(); });
+$('move').addEventListener('input',render);
+$('prev').addEventListener('click',()=>{ stop(); step(-1); });
+$('next').addEventListener('click',()=>{ stop(); step(1); });
 $('play').addEventListener('click',()=>{
-  if(timer){ clearInterval(timer); timer=null; return; }
-  const m=$('move');
-  timer=setInterval(()=>{ if(+m.value>=+m.max){ clearInterval(timer); timer=null; return; }
-    m.value=+m.value+1; render(); }, 600);
+  if(timer){ stop(); return; }
+  $('play').textContent='⏸ Hold';
+  timer=setInterval(()=>{ const m=$('move');
+    if(+m.value>=+m.max){ stop(); return; } m.value=+m.value+1; render();
+  }, +$('speed').value);
 });
+$('speed').addEventListener('change',()=>{ if(timer){ stop(); $('play').click(); } });
 initSub(); setMoveMax(); render();
 </script>
 </body>
