@@ -35,8 +35,9 @@ results/*.json
 results/*.html
 !results/.gitkeep
 
-# --- IDE / OS ---
+# --- IDE / OS / tooling ---
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+.claude/settings.local.json
