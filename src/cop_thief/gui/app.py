@@ -26,12 +26,47 @@ def render_board(snapshot: dict, grid_size: list[int]) -> str:
     return "\n".join(" ".join(row) for row in cells)
 
 
+def render_fog(observation: dict, grid_size: list[int]) -> str:
+    """Render the acting agent's fog-of-war view (`?`=unknown beyond radius).
+
+    own cell = role letter, visible opponent = other letter, `#`=barrier,
+    `.`=known-empty, `?`=outside the vision radius.
+    """
+    rows, cols = grid_size
+    own = observation["own_cell"]
+    radius = observation["vision_radius"]
+    me = "C" if observation["role"] == "cop" else "T"
+    opp = "T" if me == "C" else "C"
+    barriers = {tuple(b) for b in observation.get("visible_barriers", [])}
+    opp_cell = observation.get("visible_opponent")
+    grid = []
+    for r in range(rows):
+        line = []
+        for c in range(cols):
+            dist = max(abs(r - own[0]), abs(c - own[1]))
+            if [r, c] == own:
+                line.append(me)
+            elif dist > radius:
+                line.append("?")
+            elif opp_cell is not None and [r, c] == opp_cell:
+                line.append(opp)
+            elif (r, c) in barriers:
+                line.append("#")
+            else:
+                line.append(".")
+        grid.append(" ".join(line))
+    return "\n".join(grid)
+
+
 def replay_file(path: str, grid_size: list[int]) -> None:
-    """Print every logged turn of a stored sub-game."""
+    """Print every logged turn of a stored sub-game (true board + agent's fog)."""
     for record in ReplayStore(path).load():
         print(f"\n[sub-game {record['sub_game']} move {record['move_number']} "
               f"{record['role']}] {record['message']}")
+        print("true board:")
         print(render_board(record["resulting_state"], grid_size))
+        print(f"{record['role']} fog-of-war view:")
+        print(render_fog(record["observation"], grid_size))
 
 
 def main() -> None:
