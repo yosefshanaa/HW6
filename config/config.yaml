@@ -54,7 +54,7 @@ report:
   timezone: "Asia/Jerusalem"
   group_name: "TODO: Team-Name"
   students: []                       # TODO: [{name, id}, ...]
-  github_repo: "TODO: https://github.com/<org>/<repo>"
+  github_repo: "https://github.com/yosefshanaa/HW6"
   credentials_file: "credentials.json"
   token_file: "token.json"
   gmail_scopes: ["https://www.googleapis.com/auth/gmail.send"]

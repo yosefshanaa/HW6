@@ -3,13 +3,37 @@
 **Document:** Task tracking (`docs/TODO.md`)
 **Version:** 1.00
 **Companion docs:** [`PRD.md`](PRD.md), [`PLAN.md`](PLAN.md), per-mechanism `PRD_*.md`.
-**Last updated:** 2026-06-21
+**Last updated:** 2026-06-22
 
 > Status legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 > Priority: **P0** (must, blocks submission) · **P1** (should) · **P2** (nice-to-have).
 > Owner placeholders: `@owner-TODO`. Each phase lists **dependencies** and a **Definition of Done
 > (DoD)**. Phases follow the recommended development order (assignment §13) and the submission
 > guidelines workflow (§2.5).
+
+---
+
+## Status Snapshot (2026-06-22)
+
+**Done & verified locally** (75 tests, 97% coverage, ruff clean, pushed to `origin/main`):
+- Phases 1–10, 13–14: scaffold, config/version/secrets, engine, partial observation, baseline
+  agents, MCP servers/tools/client, orchestrator + Technical-Loss, logging/replay, internal+bonus
+  report JSON, **mocked** Gmail reporter, SDK + CLI, GUI text renderer + replay, CI workflow,
+  prompt book.
+- `uv run cop-thief` plays a full clean 6-sub-game series autonomously and emits a **JSON-only**
+  report to stdout (logs go to stderr).
+
+**Blocked on external inputs (documented, not faked):**
+- **Live Gmail send** — needs the team's Google account + OAuth (`credentials.json`/`token.json`);
+  send path is coded + mocked-tested. See [`PRD_gmail_reporting.md`](PRD_gmail_reporting.md).
+- **Cloud deployment + bearer auth over HTTPS** — needs a cloud provider + credentials (Phase 15).
+  *(A local-testable bearer-token check is provided; cloud wiring is external.)*
+- **Bonus inter-group match** — needs a real partner team + their MCP URLs/tokens (Phase 12).
+- **Research report artifacts** — parameter study, cost analysis, ISO 25010 mapping, screenshots
+  (Phase 16).
+
+**Open placeholders (fill before submission):** team name, students, real MCP cloud URLs, cloud
+provider, LLM provider/model. (`github_repo` is set to `https://github.com/yosefshanaa/HW6`.)
 
 ---
 
@@ -24,8 +48,8 @@
 - [x] **P0** Write per-mechanism PRDs (engine, MCP, strategy, partial-observability, Gmail, bonus,
   GUI/logs).
 - [ ] **P0** Team reviews & **approves all docs** (guidelines §2.5 step 5) before implementation.
-- [ ] **P1** Fill open placeholders (PRD §21): team name, students, repo URL, MCP URLs, seed, cloud
-  provider, LLM model.
+- [~] **P1** Fill open placeholders (PRD §21): `github_repo` set ✅; **still TODO** — team name,
+  students, real MCP cloud URLs, cloud provider, LLM provider/model.
 
 **DoD:** `README.md` + `docs/` (PRD, PLAN, TODO, all `PRD_*.md`) exist and are reviewed/approved; no
 code written yet.
