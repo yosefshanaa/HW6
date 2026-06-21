@@ -245,8 +245,8 @@ smoke test delivers a real report; secrets are git-ignored.
 **Deps:** Phase 9. **Owner:** `@owner-TODO`. **PRD:** [`PRD_gui_and_logs.md`](PRD_gui_and_logs.md).
 
 - [x] **P1** `gui/app.py` — text board (C/T/#/.), agents, barriers, turn line (calls SDK).
-- [ ] **P1** Per-agent observation (fog-of-war) panels. *(replay renders true resulting state;
-  per-agent fogged panels not yet split out.)*
+- [x] **P1** Per-agent observation (fog-of-war) panels — `gui/app.py render_fog` (replay shows the
+  acting agent's `?`-masked view alongside the true board); unit-tested.
 - [x] **P1** Message log + per-sub-game score lines + turn-by-turn event log (replay mode).
 - [x] **P1** Replay mode (load a series JSONL via `cop-thief-gui --replay`).
 - [ ] **P2** Capture screenshots into `assets/`/`results/` for the report.
@@ -328,11 +328,13 @@ config values.
 - [x] **P0** `README.md` as a full user manual: install, run, config guide, examples *(screenshots
   pending)*.
 - [x] **P0** Dec-POMDP formalization in README (assignment §11).
-- [ ] **P0** Research/analysis: parameter-sensitivity experiments, learning curves, charts, logs,
-  screenshots (guidelines §9).
-- [ ] **P0** LLM **cost analysis** (input/output tokens, cost per model, per-series estimate).
-- [x] **P0** **Prompt book** (`prompts/PROMPT_BOOK.md`) documenting significant prompts.
-- [ ] **P1** ISO/IEC 25010 quality-attribute mapping in the report.
+- [~] **P0** Research/analysis: real parameter-sensitivity sweep in
+  [`EXPERIMENTS.md`](EXPERIMENTS.md) (+ `notebooks/parameter_sweep.py`). **Pending:** rendered
+  charts/notebook + screenshots.
+- [~] **P0** LLM **cost analysis** template in [`COST_ANALYSIS.md`](COST_ANALYSIS.md) (model + formula
+  + placeholders). **Pending:** real token numbers (needs an LLM run).
+- [x] **P0** **Prompt book** (`prompts/PROMPT_BOOK.md`) + turn templates (`prompts/turn_templates.md`).
+- [x] **P1** ISO/IEC 25010 quality-attribute mapping ([`QUALITY_MAPPING.md`](QUALITY_MAPPING.md)).
 
 **DoD:** README is a complete manual; the scientific report covers Dec-POMDP, experiments, charts,
 cost analysis, and prompt book.
