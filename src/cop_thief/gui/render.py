@@ -69,6 +69,22 @@ def turn_view(record: dict, grid_size: list[int]) -> dict:
     }
 
 
+def group_rounds(turn_views: list[dict]) -> list[dict]:
+    """Group per-turn views into rounds (Thief turn + Cop turn = one round).
+
+    A round opens on each Thief turn; the following Cop turn attaches to it. The
+    last round may be Thief-only (the sub-game ended on a Thief action). This is
+    the user-facing "step": a sub-game has at most ``max_moves`` rounds (25), not
+    50 individual turns.
+    """
+    rounds: list[dict] = []
+    for tv in turn_views:
+        if tv["role"] == "thief" or not rounds:
+            rounds.append({"n": len(rounds) + 1, "thief": None, "cop": None})
+        rounds[-1][tv["role"]] = tv
+    return rounds
+
+
 def build_html(view_model: dict) -> str:
     """Embed the view-model JSON into the self-contained HTML template."""
     template = _TEMPLATE.read_text(encoding="utf-8")

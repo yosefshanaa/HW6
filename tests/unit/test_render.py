@@ -9,6 +9,7 @@ from cop_thief.gui.render import (
     board_to_text,
     build_html,
     fog_cells,
+    group_rounds,
     turn_view,
 )
 
@@ -65,12 +66,36 @@ def test_turn_view_serializes_record():
     assert isinstance(view["fog"], list) and len(view["fog"]) == 5
 
 
+def _tv(role, move, to):
+    return {"move": move, "role": role, "message": role + " msg",
+            "action": {"type": "move", "to": to},
+            "board": [[".", "."]], "fog": [[".", "."]]}
+
+
+def test_group_rounds_pairs_thief_then_cop():
+    turns = [_tv("thief", 0, [1, 1]), _tv("cop", 0, [0, 1]),
+             _tv("thief", 1, [2, 2]), _tv("cop", 1, [1, 2])]
+    rounds = group_rounds(turns)
+    assert len(rounds) == 2                        # 4 turns -> 2 rounds (not 4 steps)
+    assert rounds[0]["n"] == 1
+    assert rounds[0]["thief"]["role"] == "thief"
+    assert rounds[0]["cop"]["role"] == "cop"
+
+
+def test_group_rounds_trailing_thief_only():
+    turns = [_tv("thief", 0, [1, 1]), _tv("cop", 0, [0, 1]), _tv("thief", 1, [2, 2])]
+    rounds = group_rounds(turns)
+    assert len(rounds) == 2
+    assert rounds[1]["thief"] is not None
+    assert rounds[1]["cop"] is None                # sub-game ended on the Thief's move
+
+
 def test_build_html_embeds_view_model():
     vm = {"grid_size": [5, 5], "totals": {"cop": 20, "thief": 5},
           "sub_games": [{"index": 1, "winner": "cop", "cop_score": 20,
-                         "thief_score": 5, "moves_played": 4, "turns": []}]}
+                         "thief_score": 5, "moves_played": 4, "rounds": []}]}
     html = build_html(vm)
     assert "__VIEW_MODEL__" not in html           # placeholder replaced
     assert "Cop &amp; Thief" in html
-    assert '<table id="board">' in html
+    assert 'id="board"' in html
     assert json.dumps(vm) in html                 # exact data embedded

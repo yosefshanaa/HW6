@@ -9,108 +9,84 @@
   :root{
     --bg:#05080a; --panel:#0a1210; --panel2:#0b1714; --grid:#0e1d18;
     --line:#163026; --line2:#1f4636;
-    --phos:#5dffae;            /* phosphor green */
-    --phosdim:#2f7a59;
-    --amber:#ffb454;
-    --cop:#36d3ff;             /* cop sweep (cyan) */
-    --thief:#ff556e;           /* thief (red) */
-    --ink:#bfe9d4; --muted:#577a68;
+    --phos:#5dffae; --phosdim:#2f7a59; --amber:#ffb454;
+    --cop:#36d3ff; --thief:#ff556e; --ink:#bfe9d4; --muted:#6c8f7c;
     --mono:"JetBrains Mono","Cascadia Code","SFMono-Regular","Fira Code","DejaVu Sans Mono","Consolas",ui-monospace,monospace;
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
   body{margin:0;font-family:var(--mono);color:var(--ink);
-    background:
-      radial-gradient(1200px 700px at 75% -20%, #0c1b16 0%, transparent 60%),
-      radial-gradient(900px 600px at 0% 120%, #0a1512 0%, transparent 55%),
-      linear-gradient(var(--bg),#04070a);
-    background-attachment:fixed;}
-  /* CRT scanlines + vignette overlay */
+    background:radial-gradient(1200px 700px at 75% -20%,#0c1b16 0%,transparent 60%),
+      radial-gradient(900px 600px at 0% 120%,#0a1512 0%,transparent 55%),linear-gradient(var(--bg),#04070a);
+    background-attachment:fixed}
   body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
     background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
     mix-blend-mode:multiply;opacity:.5;animation:flick 6s steps(60) infinite}
-  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
-    box-shadow:inset 0 0 220px rgba(0,0,0,.85)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;box-shadow:inset 0 0 220px rgba(0,0,0,.85)}
   @keyframes flick{0%,97%,100%{opacity:.5}98%{opacity:.62}}
-  .wrap{max-width:1120px;margin:0 auto;padding:1.4rem 1.25rem 3rem;position:relative;z-index:1}
-
-  /* Header readout bar */
-  header{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
-    border:1px solid var(--line2);border-radius:6px;background:linear-gradient(180deg,var(--panel2),var(--panel));
-    padding:.7rem 1rem;box-shadow:0 0 0 1px #04100b inset, 0 10px 30px rgba(0,0,0,.5);
-    animation:rise .5s both}
-  .brand{font-weight:700;letter-spacing:.28em;font-size:1rem;color:var(--phos);
-    text-shadow:0 0 10px rgba(93,255,174,.5)}
-  .brand b{color:var(--ink)} .brand .x{color:var(--muted);margin:0 .35em}
+  .wrap{max-width:1140px;margin:0 auto;padding:1.4rem 1.25rem 3rem;position:relative;z-index:1}
+  header{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;border:1px solid var(--line2);border-radius:6px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));padding:.7rem 1rem;
+    box-shadow:0 0 0 1px #04100b inset,0 10px 30px rgba(0,0,0,.5);animation:rise .5s both}
+  .brand{font-weight:700;letter-spacing:.28em;color:var(--phos);text-shadow:0 0 10px rgba(93,255,174,.5)}
+  .brand .x{color:var(--muted);margin:0 .35em}
   .tag{color:var(--muted);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase}
   .grow{flex:1}
   .readout{display:flex;gap:1.1rem;font-size:.72rem;letter-spacing:.12em;color:var(--muted)}
-  .readout b{color:var(--amber);font-weight:600}
+  .readout b{color:var(--amber)}
   .rec{display:inline-flex;align-items:center;gap:.4rem;color:var(--thief);font-size:.72rem;letter-spacing:.18em}
   .rec i{width:9px;height:9px;border-radius:50%;background:var(--thief);box-shadow:0 0 10px var(--thief);animation:blink 1.1s infinite}
   @keyframes blink{50%{opacity:.25}}
-
-  /* Console rail */
-  .rail{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:1rem 0 1.3rem;
-    border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:.65rem .85rem;animation:rise .5s .05s both}
+  .rail{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:1rem 0 .4rem;border:1px solid var(--line);
+    border-radius:6px;background:var(--panel);padding:.65rem .85rem;animation:rise .5s .05s both}
   .rail label{color:var(--muted);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:.45rem}
-  select{font:inherit;font-size:.82rem;color:var(--ink);background:var(--grid);border:1px solid var(--line2);
-    border-radius:4px;padding:.32rem .5rem}
-  button{font:inherit;font-size:.78rem;letter-spacing:.1em;color:var(--phos);background:var(--grid);
-    border:1px solid var(--line2);border-radius:4px;padding:.4rem .7rem;cursor:pointer;transition:.14s;text-transform:uppercase}
+  select{font:inherit;font-size:.82rem;color:var(--ink);background:var(--grid);border:1px solid var(--line2);border-radius:4px;padding:.32rem .5rem}
+  button{font:inherit;font-size:.76rem;letter-spacing:.08em;color:var(--phos);background:var(--grid);border:1px solid var(--line2);
+    border-radius:4px;padding:.4rem .65rem;cursor:pointer;transition:.14s;text-transform:uppercase}
   button:hover{border-color:var(--phos);box-shadow:0 0 12px rgba(93,255,174,.25);color:#eafff4}
   button.run{color:#04140d;background:linear-gradient(180deg,var(--phos),var(--phosdim));border-color:transparent;font-weight:700}
+  button.tab.on{color:#04140d;font-weight:700}
+  button.tab.cop.on{background:linear-gradient(180deg,#9bedff,var(--cop));border-color:transparent}
+  button.tab.thief.on{background:linear-gradient(180deg,#ffb1bd,var(--thief));border-color:transparent}
+  button:disabled{opacity:.35;cursor:not-allowed}
   input[type=range]{accent-color:var(--phos);width:230px}
-
-  /* Status line */
-  .status{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:.2rem 0 1rem;font-size:.85rem;animation:rise .5s .1s both}
-  .chip{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;padding:.2rem .55rem;border-radius:3px;border:1px solid var(--line2)}
-  .chip.cop{color:var(--cop);border-color:rgba(54,211,255,.4);background:rgba(54,211,255,.08);text-shadow:0 0 8px rgba(54,211,255,.4)}
-  .chip.thief{color:var(--thief);border-color:rgba(255,85,110,.4);background:rgba(255,85,110,.08);text-shadow:0 0 8px rgba(255,85,110,.4)}
+  .help{color:var(--muted);font-size:.7rem;letter-spacing:.04em;margin:.1rem 0 1rem}
+  .status{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:.4rem 0 1rem;font-size:.85rem;animation:rise .5s .1s both}
+  .chip{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .55rem;border-radius:3px;border:1px solid var(--line2)}
+  .chip.cop{color:var(--cop);border-color:rgba(54,211,255,.4);background:rgba(54,211,255,.08)}
+  .chip.thief{color:var(--thief);border-color:rgba(255,85,110,.4);background:rgba(255,85,110,.08)}
   .chip.win{color:var(--amber);border-color:rgba(255,180,84,.45);background:rgba(255,180,84,.08)}
-
-  /* HUD cards with corner brackets */
   .grid{display:grid;grid-template-columns:auto auto 1fr;gap:1.1rem;align-items:start}
   @media(max-width:900px){.grid{grid-template-columns:1fr}}
-  .card{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));
-    border:1px solid var(--line);border-radius:6px;padding:1rem 1.1rem;animation:rise .55s both}
+  .card{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+    border-radius:6px;padding:1rem 1.1rem;animation:rise .55s both}
   .card:nth-child(2){animation-delay:.06s}.card:nth-child(3){animation-delay:.12s}
   .card::before,.card::after{content:"";position:absolute;width:12px;height:12px;border:2px solid var(--phosdim);opacity:.7}
-  .card::before{top:6px;left:6px;border-right:0;border-bottom:0}
-  .card::after{bottom:6px;right:6px;border-left:0;border-top:0}
-  .card h3{margin:.1rem 0 .85rem;font-size:.72rem;color:var(--phos);font-weight:600;
-    letter-spacing:.22em;text-transform:uppercase;text-shadow:0 0 8px rgba(93,255,174,.3)}
-
-  /* Tactical grid */
+  .card::before{top:6px;left:6px;border-right:0;border-bottom:0}.card::after{bottom:6px;right:6px;border-left:0;border-top:0}
+  .card h3{margin:.1rem 0 .2rem;font-size:.74rem;color:var(--phos);font-weight:700;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 0 8px rgba(93,255,174,.3)}
+  .card .sub{color:var(--muted);font-size:.68rem;letter-spacing:.04em;margin-bottom:.7rem}
   table{border-collapse:separate;border-spacing:3px}
-  th{color:var(--muted);font-weight:500;font-size:.64rem;width:40px;height:18px}
-  td.cell{width:40px;height:40px;text-align:center;font-size:1rem;font-weight:700;border-radius:4px;
-    background:var(--grid);border:1px solid var(--line);color:var(--muted);position:relative;
-    transition:transform .16s,box-shadow .18s,background .18s}
-  td.c{color:#06222b;background:radial-gradient(circle at 50% 35%,#9bedff,var(--cop));
-    border-color:transparent;box-shadow:0 0 14px rgba(54,211,255,.55)}
-  td.t{color:#2a0610;background:radial-gradient(circle at 50% 35%,#ffb1bd,var(--thief));
-    border-color:transparent;box-shadow:0 0 14px rgba(255,85,110,.5)}
+  th{color:var(--muted);font-weight:500;font-size:.62rem;width:40px;height:18px}
+  td.cell{width:40px;height:40px;text-align:center;font-size:1rem;font-weight:700;border-radius:4px;background:var(--grid);
+    border:1px solid var(--line);color:var(--muted);transition:transform .16s,box-shadow .18s,background .18s}
+  td.c{color:#06222b;background:radial-gradient(circle at 50% 35%,#9bedff,var(--cop));border-color:transparent;box-shadow:0 0 14px rgba(54,211,255,.55)}
+  td.t{color:#2a0610;background:radial-gradient(circle at 50% 35%,#ffb1bd,var(--thief));border-color:transparent;box-shadow:0 0 14px rgba(255,85,110,.5)}
   td.b{color:var(--phosdim);background:repeating-linear-gradient(45deg,#14271f,#14271f 5px,#0d1a14 5px,#0d1a14 10px)}
-  td.u{background:#070d0b;border-color:#0c1813;color:transparent}
-  td.u::after{content:"·";color:#16241b}
+  td.e{color:#1f3a2c;font-weight:400}
+  td.u{color:#3a5a49;background:repeating-linear-gradient(45deg,#070d0b,#070d0b 4px,#0a120e 4px,#0a120e 8px);border-color:#0c1813;font-weight:700}
   td.hl{outline:2px solid var(--amber);outline-offset:1px;transform:translateY(-2px);box-shadow:0 0 16px rgba(255,180,84,.5)}
   td.cap{animation:cap .85s ease-in-out infinite}
   @keyframes cap{0%,100%{box-shadow:0 0 0 0 rgba(93,255,174,.7)}50%{box-shadow:0 0 0 7px rgba(93,255,174,0)}}
-  .legend{display:flex;gap:.9rem;flex-wrap:wrap;color:var(--muted);font-size:.68rem;letter-spacing:.06em;margin-top:.7rem}
-  .legend span{display:flex;align-items:center;gap:.4rem}
-  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
-
-  /* Intel + log */
-  .kv{line-height:1.95;font-size:.86rem} .kv b{color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.7rem}
+  .legend{display:flex;gap:.85rem;flex-wrap:wrap;color:var(--muted);font-size:.66rem;letter-spacing:.04em;margin-top:.7rem}
+  .legend span{display:flex;align-items:center;gap:.35rem}
+  .gl{display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center;border-radius:3px;font-weight:700;font-size:.72rem}
+  .kv{line-height:1.95;font-size:.86rem}
+  .kv b{color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.68rem}
   .kv .msg{color:var(--amber)}
   .totbar{display:flex;height:10px;border-radius:3px;overflow:hidden;border:1px solid var(--line2);margin:.5rem 0 .3rem}
   .feed{max-height:220px;overflow:auto;font-size:.78rem;line-height:1.7}
   .feed .ln::before{content:"› ";color:var(--phosdim)}
-  .feed .who{letter-spacing:.06em} .feed .cop{color:var(--cop)} .feed .thief{color:var(--thief)}
-  .feed .act{color:var(--phos)} .feed .mv{color:var(--muted)}
-  .cursor{display:inline-block;width:8px;height:1em;vertical-align:-2px;background:var(--phos);
-    box-shadow:0 0 8px var(--phos);animation:blink 1s steps(1) infinite;margin-left:2px}
+  .feed .cop{color:var(--cop)}.feed .thief{color:var(--thief)}.feed .act{color:var(--phos)}.feed .mv{color:var(--muted)}
+  .cursor{display:inline-block;width:8px;height:1em;vertical-align:-2px;background:var(--phos);box-shadow:0 0 8px var(--phos);animation:blink 1s steps(1) infinite;margin-left:2px}
   footer{color:var(--muted);font-size:.72rem;letter-spacing:.1em;margin-top:1.6rem;text-align:center}
   @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 </style>
@@ -122,42 +98,49 @@
     <span class="tag">tactical pursuit grid</span>
     <span class="grow"></span>
     <span class="readout">
-      <span>MODE <b id="mode">REPLAY</b></span>
-      <span>GRID <b id="gridr"></b></span>
-      <span class="rec"><i></i>REC</span>
+      <span>MODE <b>REPLAY</b></span><span>GRID <b id="gridr"></b></span><span class="rec"><i></i>REC</span>
     </span>
   </header>
 
   <div class="rail">
     <label>SUB-GAME <select id="sub"></select></label>
-    <button id="prev" title="previous move">⏮ Prev</button>
+    <button id="prev" title="previous step">⏮ Prev</button>
     <button id="play" class="run" title="play / pause">▶ Run</button>
-    <button id="next" title="next move">Next ⏭</button>
-    <label>MOVE <input type="range" id="move" min="0" value="0"></label>
+    <button id="next" title="next step">Next ⏭</button>
+    <label>STEP <input type="range" id="move" min="0" value="0"></label>
     <span class="chip" id="movelbl"></span>
+    <span style="margin-left:.4rem;color:var(--muted);font-size:.7rem;letter-spacing:.14em">PHASE</span>
+    <button id="ptThief" class="tab thief">Thief</button>
+    <button id="ptCop" class="tab cop">Cop</button>
     <span class="grow"></span>
     <label>SPEED <select id="speed">
       <option value="900">0.5×</option><option value="550" selected>1×</option><option value="250">2×</option>
     </select></label>
   </div>
+  <div class="help">A <b>STEP</b> (round) = Thief action then Cop action — max 25 per sub-game. Each step
+    has two <b>turns</b>; use the PHASE buttons to inspect each agent's view.</div>
 
   <div class="status" id="scores"></div>
 
   <div class="grid">
     <div class="card">
-      <h3>True board · ground truth</h3>
+      <h3>Truth Board · Referee View</h3>
+      <div class="sub">The actual full board — for replay &amp; debugging.</div>
       <table id="board"></table>
       <div class="legend">
-        <span><i class="sw" style="background:var(--cop)"></i>Cop</span>
-        <span><i class="sw" style="background:var(--thief)"></i>Thief</span>
-        <span><i class="sw" style="background:#14271f"></i>Barrier</span>
-        <span><i class="sw" style="background:var(--amber)"></i>Last move</span>
+        <span><i class="gl c">C</i>Cop</span><span><i class="gl t">T</i>Thief</span>
+        <span><i class="gl b">▦</i>Barrier</span><span><i class="gl e">·</i>empty</span>
       </div>
     </div>
     <div class="card">
-      <h3 id="fogtitle">Fog-of-war</h3>
+      <h3 id="fogtitle">Agent Fog View</h3>
+      <div class="sub" id="fogsub">What the acting agent could legally see this turn.</div>
       <table id="fog"></table>
-      <div class="legend"><span><i class="sw" style="background:#070d0b;border:1px solid #16241b"></i>Unseen · beyond vision radius</span></div>
+      <div class="legend">
+        <span><i class="gl c">C</i>Cop</span><span><i class="gl t">T</i>Thief</span>
+        <span><i class="gl b">▦</i>Barrier</span><span><i class="gl e">·</i>known empty</span>
+        <span><i class="gl u">?</i>unknown · beyond vision radius</span>
+      </div>
     </div>
     <div class="card">
       <h3>Intel · this turn</h3>
@@ -178,9 +161,10 @@
 
 <script>
 const DATA = __VIEW_MODEL__;
-const GLYPH = {C:'C', T:'T', '#':'▦', '.':'', '?':''};
+const GLYPH = {C:'C', T:'T', '#':'▦', '.':'·', '?':'?'};
 const CLS   = {C:'c', T:'t', '#':'b', '.':'e', '?':'u'};
 const $ = id => document.getElementById(id);
+let focus = 'cop';                       // phase focus within a round
 function thc(t){ const th=document.createElement('th'); th.textContent=t; return th; }
 function draw(el, cells, hl, capture){
   el.innerHTML='';
@@ -201,55 +185,70 @@ function draw(el, cells, hl, capture){
   });
 }
 function curSub(){ return DATA.sub_games[+$('sub').value]; }
+function curRound(){ return curSub().rounds[+$('move').value]; }
+function phaseOf(r){ if(r[focus]) return {role:focus, ph:r[focus]};
+  const o=focus==='cop'?'thief':'cop'; return {role:o, ph:r[o]}; }
 function render(){
-  const sg=curSub(); const mv=+$('move').value; const t=sg.turns[mv];
-  const to=(t.action&&t.action.to)||null;
-  const cap=(mv===sg.turns.length-1 && sg.winner==='cop');
-  draw($('board'), t.board, to, cap); draw($('fog'), t.fog, null, false);
-  const cls=t.role==='cop'?'cop':'thief';
-  $('fogtitle').innerHTML='Fog-of-war · <span class="chip '+cls+'">'+t.role+'</span>';
-  $('movelbl').textContent='MOVE '+(mv+1)+' / '+sg.turns.length;
-  $('turn').innerHTML='<b>actor</b> <span class="chip '+cls+'">'+t.role+'</span><br>'+
-    '<b>action</b> '+JSON.stringify(t.action)+'<br><b>message</b> <span class="msg">“'+t.message+'”</span>';
+  const sg=curSub(); const ri=+$('move').value; const r=sg.rounds[ri];
+  const {role,ph}=phaseOf(r);
+  const to=(ph.action&&ph.action.to)||null;
+  const cap=(ri===sg.rounds.length-1 && sg.winner==='cop' && role==='cop');
+  draw($('board'), ph.board, to, cap); draw($('fog'), ph.fog, null, false);
+  const cls=role==='cop'?'cop':'thief';
+  $('fogtitle').innerHTML='Agent Fog View · <span class="chip '+cls+'">'+role+"'s observation</span>";
+  $('fogsub').textContent="What the "+role+" could legally see at this turn (radius-limited).";
+  $('movelbl').textContent='STEP '+(ri+1)+' / '+sg.rounds.length;
+  $('ptThief').classList.toggle('on', role==='thief'); $('ptThief').disabled=!r.thief;
+  $('ptCop').classList.toggle('on', role==='cop'); $('ptCop').disabled=!r.cop;
+  $('turn').innerHTML='<b>actor</b> <span class="chip '+cls+'">'+role+'</span> · turn '+(ph.move+1)+
+    '<br><b>action</b> '+JSON.stringify(ph.action)+'<br><b>message</b> <span class="msg">“'+ph.message+'”</span>';
   const wcls=sg.winner==='cop'?'cop':(sg.winner==='thief'?'thief':'win');
   $('scores').innerHTML='<b style="letter-spacing:.1em">SUB-GAME '+sg.index+'</b>'+
     '<span class="chip '+wcls+'">winner · '+sg.winner+'</span>'+
     '<span class="chip">cop '+sg.cop_score+'</span><span class="chip">thief '+sg.thief_score+'</span>';
-  $('log').innerHTML=sg.turns.slice(0,mv+1).map(x=>{
-    const c=x.role==='cop'?'cop':'thief';
-    return '<div class="ln"><span class="mv">'+x.move+'</span> '+
-      '<span class="who '+c+'">'+x.role+'</span> · '+x.message+
-      ' <span class="act">→ '+JSON.stringify(x.action)+'</span></div>';
-  }).join('')+'<span class="cursor"></span>';
-  $('log').scrollTop=$('log').scrollHeight;
+  let lines='';
+  for(let i=0;i<=ri;i++){ const rr=sg.rounds[i];
+    for(const k of ['thief','cop']){
+      if(!rr[k]) continue;
+      if(i===ri && k==='cop' && role==='thief') continue;  // stop at the focused phase
+      const p=rr[k];
+      lines+='<div class="ln"><span class="mv">s'+(i+1)+'</span> <span class="'+k+'">'+k+
+        '</span> · '+p.message+' <span class="act">→ '+JSON.stringify(p.action)+'</span></div>';
+    }
+  }
+  $('log').innerHTML=lines+'<span class="cursor"></span>'; $('log').scrollTop=$('log').scrollHeight;
   const tot=DATA.totals, sum=Math.max(1,tot.cop+tot.thief);
   $('totbar').innerHTML='<div style="width:'+(100*tot.cop/sum)+'%;background:var(--cop)"></div>'+
     '<div style="width:'+(100*tot.thief/sum)+'%;background:var(--thief)"></div>';
   $('totals').innerHTML='<b>cop</b> '+tot.cop+' &nbsp;&nbsp; <b>thief</b> '+tot.thief;
 }
+function lastPhase(r){ return r.cop?'cop':'thief'; }
 function initSub(){
   $('gridr').textContent=DATA.grid_size[0]+'×'+DATA.grid_size[1];
   const sel=$('sub'); sel.innerHTML='';
   DATA.sub_games.forEach((sg,i)=>{ const o=document.createElement('option');
     o.value=i; o.textContent='#'+sg.index+'  ('+sg.winner+')'; sel.appendChild(o); });
 }
-function setMoveMax(){ const sg=curSub(); const m=$('move'); m.max=Math.max(0,sg.turns.length-1); m.value=0; }
-function step(d){ const m=$('move'); m.value=Math.min(+m.max,Math.max(0,+m.value+d)); render(); }
+function setRoundMax(){ const sg=curSub(); const m=$('move'); m.max=Math.max(0,sg.rounds.length-1); m.value=0;
+  focus=lastPhase(sg.rounds[0]); }
+function step(d){ const m=$('move'); m.value=Math.min(+m.max,Math.max(0,+m.value+d)); focus=lastPhase(curRound()); render(); }
 let timer=null;
 function stop(){ if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Run';} }
-$('sub').addEventListener('change',()=>{ stop(); setMoveMax(); render(); });
-$('move').addEventListener('input',render);
+$('sub').addEventListener('change',()=>{ stop(); setRoundMax(); render(); });
+$('move').addEventListener('input',()=>{ focus=lastPhase(curRound()); render(); });
 $('prev').addEventListener('click',()=>{ stop(); step(-1); });
 $('next').addEventListener('click',()=>{ stop(); step(1); });
+$('ptThief').addEventListener('click',()=>{ if(curRound().thief){ focus='thief'; render(); } });
+$('ptCop').addEventListener('click',()=>{ if(curRound().cop){ focus='cop'; render(); } });
 $('play').addEventListener('click',()=>{
   if(timer){ stop(); return; }
   $('play').textContent='⏸ Hold';
   timer=setInterval(()=>{ const m=$('move');
-    if(+m.value>=+m.max){ stop(); return; } m.value=+m.value+1; render();
+    if(+m.value>=+m.max){ stop(); return; } m.value=+m.value+1; focus=lastPhase(curRound()); render();
   }, +$('speed').value);
 });
 $('speed').addEventListener('change',()=>{ if(timer){ stop(); $('play').click(); } });
-initSub(); setMoveMax(); render();
+initSub(); setRoundMax(); render();
 </script>
 </body>
 </html>

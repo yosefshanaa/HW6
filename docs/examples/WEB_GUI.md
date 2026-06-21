@@ -8,39 +8,42 @@ amber-red = Thief, HUD corner-brackets, coordinate rulers, and a live "comms fee
 
 ## Curated sample
 
-[`sample_web_gui.html`](sample_web_gui.html) — a real replay of one completed sub-game (Cop wins).
-Open it in any browser (double-click, or `file://` path). It is regenerated with:
+[`sample_web_gui.html`](sample_web_gui.html) — a real replay of a full 6-sub-game series (shows the
+Cop placing **tactical barriers**). Open it in any browser (double-click, or `file://` path).
+Regenerate with:
 
 ```bash
 uv run cop-thief --results-dir results
-uv run cop-thief-web-gui --replay results/<ts>/sub_game_1.jsonl \
+uv run cop-thief-web-gui --replay results/<ts>/ \
     --no-open --output docs/examples/sample_web_gui.html
 ```
 
 ## What the page shows
 
 ```
- Cop & Thief — Web GUI
- [ Sub-game ▼ ]  Move [====|----]  3 / 5   [▶ Play]
- Sub-game 1 — winner cop (cop 20 / thief 5)
+ COP × THIEF                                  MODE REPLAY  GRID 5×5  ●REC
+ [Sub-game ▼] ⏮Prev ▶Run Next⏭  STEP [===|---]  STEP 4/13  PHASE [Thief][Cop]
+ A STEP (round) = Thief action then Cop action — max 25 per sub-game.
 
- ┌── True board ──┐   ┌── Fog-of-war (cop) ──┐   ┌── Turn ──────────────┐
- │ . . . . .      │   │ C . . ? ?            │   │ role: cop            │
- │ . . . . .      │   │ . . . ? ?            │   │ action: {move,[1,1]} │
- │ . . C . .      │   │ ? ? ? ? ?            │   │ message: closing in  │
- │ . . . T .      │   │ ? ? ? ? ?            │   │                      │
- │ . . . . .      │   │ ? ? ? ? ?            │   │ Series totals        │
- └────────────────┘   └─────────────────────┘   │ cop 105 / thief 35   │
- Message / action log
- [0 thief] slipping toward [0,0]  →  {"type":"move","to":[1,1]}
- [0 cop]   closing in toward [3,1] →  {"type":"move","to":[1,1]}  ...
+ ┌─ Truth Board · Referee View ─┐  ┌─ Agent Fog View · Cop's observation ─┐  ┌─ Intel ─┐
+ │   0 1 2 3 4                   │  │   0 1 2 3 4                            │  actor Cop
+ │ 0 · · · · ·                   │  │ 0 C · · ? ?                            │  turn 7
+ │ 1 · · · · ·                   │  │ 1 · · · ? ?                            │  action move
+ │ 2 · · C · ·                   │  │ 2 ? ? ? ? ?                            │  msg "closing"
+ │ 3 · · · T ·                   │  │ 3 ? ? ? ? ?                            │
+ │ 4 · · ▦ · ·                   │  │ 4 ? ? ? ? ?                            │  totals
+ └──────────────────────────────┘  └───────────────────────────────────────┘  cop / thief
+   C=Cop T=Thief ▦=Barrier ·=empty    …plus ?=unknown (beyond vision radius)
 ```
 
-- **True board** — full state (C=cop, T=thief, ▦=barrier).
-- **Fog-of-war** — the acting agent's partial view (`?` = beyond its vision radius).
-- **Sub-game selector** + **move slider** + **⏮ Prev / ▶ Run / Next ⏭** + **speed** (0.5×/1×/2×).
-- **Winner / per-sub-game scores** and **series totals**.
-- **Message/action log** (the natural-language `message`s, including the Thief's bluffs).
+- **Truth Board · Referee View** — the actual full board (replay/debug): `C`=cop, `T`=thief,
+  `▦`=barrier, `·`=empty.
+- **Agent Fog View · <agent>'s observation** — only what the acting agent could legally see;
+  `?` (hatched) = **unknown / beyond the vision radius**, clearly distinct from `·` known-empty.
+- **STEP** = one round = Thief action + Cop action (**max 25**, not 50). The **PHASE** buttons
+  (Thief / Cop) switch which agent's turn/observation is shown within the step.
+- **⏮ Prev / ▶ Run / Next ⏭** step by round; **speed** 0.5×/1×/2×.
+- **Winner / per-sub-game scores**, **series totals**, and a **comms feed** (messages may bluff).
 
 ## Screenshot
 

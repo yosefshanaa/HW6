@@ -68,9 +68,16 @@ uv run cop-thief-gui --replay results/<ts>/sub_game_1.jsonl
 
 #### Browser GUI
 
-Renders a **self-contained local HTML page** (no network/CDN) and opens it in your default browser —
-board, fog-of-war, a sub-game selector + move slider with ▶ Play, the message/action log, and
-scores:
+Renders a **self-contained local HTML page** (no network/CDN) and opens it in your default browser.
+It clearly separates the two views and counts in **steps**, not raw turns:
+
+- **Truth Board · Referee View** — the actual full board (replay/debug).
+- **Agent Fog View · <agent>'s observation** — what the acting agent could legally see (radius-limited;
+  unknown cells beyond the vision radius are marked `?`, distinct from `·` known-empty).
+- **STEP** = one round = *Thief action + Cop action* (**max 25** per sub-game, not 50). Each step has
+  two turns; the **Thief / Cop PHASE** buttons inspect each agent's view within the step.
+- Sub-game selector, **⏮ Prev / ▶ Run / Next ⏭** + speed, a legend (`C`/`T`/`▦`/`·`/`?`), the comms
+  feed, and scores.
 
 ```bash
 uv run cop-thief-web-gui                               # play a fresh series, then open it
@@ -121,6 +128,10 @@ landing on the Thief; the Thief wins by surviving 25 moves. Scoring: Cop win →
 5/10. A series is 6 sub-games. Each agent sees the opponent/barriers only within its vision radius
 (Chebyshev) — the game is a **Dec-POMDP** ⟨n, S, {Aᵢ}, P, R, {Ωᵢ}, O, γ⟩
 (see [`docs/PRD_partial_observability.md`](docs/PRD_partial_observability.md)).
+
+The baseline heuristic **Cop** pursues to capture and **occasionally drops a tactical barrier** to
+herd a near, edge-pinned Thief — deterministic, always legal, and never sacrificing an available
+capture or self-trapping (see [`docs/PRD_agent_strategy.md`](docs/PRD_agent_strategy.md)).
 
 ## Reporting (Gmail)
 

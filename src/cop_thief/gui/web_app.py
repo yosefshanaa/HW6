@@ -12,16 +12,17 @@ import json
 import webbrowser
 from pathlib import Path
 
-from cop_thief.gui.render import build_html, turn_view
+from cop_thief.gui.render import build_html, group_rounds, turn_view
 from cop_thief.sdk.sdk import CopThiefSDK
 from cop_thief.shared.replay import ReplayStore
 
 
 def _sub_view(index, winner, cop_score, thief_score, moves, records, grid) -> dict:
+    turns = [turn_view(r, grid) for r in records]
     return {
         "index": index, "winner": winner, "cop_score": cop_score,
         "thief_score": thief_score, "moves_played": moves,
-        "turns": [turn_view(r, grid) for r in records],
+        "rounds": group_rounds(turns),
     }
 
 

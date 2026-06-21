@@ -49,7 +49,10 @@ class Orchestrator:
         cop_pos, thief_pos = self._start_positions()
         self.referee.reset(cop_pos, thief_pos)
         store = ReplayStore(self.series_dir / f"sub_game_{index}.jsonl")
-        memory = {PlayerRole.COP: {}, PlayerRole.THIEF: {}}
+        memory = {
+            PlayerRole.COP: {"max_barriers": self.referee.max_barriers},
+            PlayerRole.THIEF: {},
+        }
         order = (
             (PlayerRole.THIEF, self.thief),
             (PlayerRole.COP, self.cop),

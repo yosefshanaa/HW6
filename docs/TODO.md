@@ -138,8 +138,8 @@ exists for the README.
 **Deps:** Phase 4. **Owner:** `@owner-TODO`. **PRD:** [`PRD_agent_strategy.md`](PRD_agent_strategy.md).
 
 - [x] **P0** `agents/strategy/base.py` — `Strategy` base class (Template Method; no duplication).
-- [x] **P0** `agents/strategy/heuristic.py` — Cop pursuit; Thief evasion. *(baseline Cop uses pure
-  pursuit; opportunistic barrier placement deferred — engine fully supports barriers.)*
+- [x] **P0** `agents/strategy/heuristic.py` — Cop pursuit + **tactical barriers** (capture-first,
+  then herd an edge-pinned Thief at d=2; deterministic, legal, no self-trap); Thief evasion.
 - [x] **P1** `agents/strategy/q_table.py` — tabular Q-Learning Bellman update + greedy action.
   *(core implemented; full ε-greedy policy strategy is a future enhancement.)*
 - [x] **P0** Bluff handling: heuristic never treats messages as ground truth (ignores text;
