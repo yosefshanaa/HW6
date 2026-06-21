@@ -1,5 +1,7 @@
 # HW6 — Cop & Thief: Dual AI Agents via MCP
 
+[![CI](https://github.com/yosefshanaa/HW6/actions/workflows/ci.yml/badge.svg)](https://github.com/yosefshanaa/HW6/actions/workflows/ci.yml)
+
 Two autonomous AI agents — a **Cop** and a **Thief** — play a turn-based pursuit game on a
 configurable grid under **partial observability**, each fronted by its own **MCP server** and
 communicating in natural language (bluffing allowed). The graded core is the **orchestration,
