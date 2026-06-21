@@ -28,6 +28,12 @@ venv/
 .coverage
 htmlcov/
 
+# --- Runtime logs / results (keep dirs via .gitkeep, ignore contents) ---
+logs/
+results/*.jsonl
+results/*.json
+!results/.gitkeep
+
 # --- IDE / OS ---
 .vscode/
 .idea/

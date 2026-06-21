@@ -1,0 +1,31 @@
+{
+  "rate_limits": {
+    "version": "1.00",
+    "services": {
+      "default": {
+        "requests_per_minute": 30,
+        "requests_per_hour": 500,
+        "concurrent_max": 5,
+        "retry_after_seconds": 30,
+        "max_retries": 3,
+        "max_queue_depth": 100
+      },
+      "llm": {
+        "requests_per_minute": 30,
+        "requests_per_hour": 500,
+        "concurrent_max": 5,
+        "retry_after_seconds": 30,
+        "max_retries": 3,
+        "max_queue_depth": 100
+      },
+      "gmail": {
+        "requests_per_minute": 30,
+        "requests_per_hour": 250,
+        "concurrent_max": 2,
+        "retry_after_seconds": 30,
+        "max_retries": 3,
+        "max_queue_depth": 50
+      }
+    }
+  }
+}

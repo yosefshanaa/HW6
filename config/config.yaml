@@ -1,0 +1,66 @@
+# Cop & Thief — main game/system configuration (versioned).
+# All tunable values live here, never hard-coded in source (PRD §12, ADR-006).
+version: "1.00"
+
+# --- Board & game rules ---
+grid_size: [5, 5]          # [rows, cols]; default 5x5
+max_moves: 25              # max Thief moves per sub-game (25 rounds)
+num_games: 6              # sub-games per series
+max_barriers: 5           # max barriers the Cop may place per sub-game
+vision_radius: 2          # king-move (Chebyshev) vision radius
+movement_mode: eight_directional
+
+# --- Scoring (PRD §8) ---
+scoring:
+  cop_win: 20             # Cop points on capture
+  thief_win: 10           # Thief points on escape
+  cop_loss: 5             # Cop points when the Thief escapes
+  thief_loss: 5           # Thief points when captured
+
+# --- Start positions ---
+start_mode: random        # "random" (seeded) or "fixed"
+seed: 1234                # shared seed for reproducible starts
+fixed_start:              # used only when start_mode == "fixed"
+  cop: [0, 0]
+  thief: [4, 4]
+
+# --- Agents / LLM ---
+agents:
+  cop_strategy: heuristic   # heuristic | q_table | llm
+  thief_strategy: heuristic
+llm:
+  provider: none          # none | openai | anthropic | gemini | ollama
+  model: "TODO: model-id"
+  temperature: 0.7
+  per_turn_timeout_seconds: 30
+
+# --- MCP servers ---
+mcp:
+  cop_host: "127.0.0.1"
+  cop_port: 8001
+  thief_host: "127.0.0.1"
+  thief_port: 8002
+  cop_url: "TODO: https://cop-mcp.example.run"
+  thief_url: "TODO: https://thief-mcp.example.run"
+
+# --- Auth (tokens come from env, never here) ---
+auth:
+  header_name: "Authorization"
+  token_env_var: "MCP_AUTH_TOKEN"   # token value lives in the environment
+
+# --- Reporting / email ---
+report:
+  recipient: "rmisegal+uoh26b@gmail.com"
+  timezone: "Asia/Jerusalem"
+  group_name: "TODO: Team-Name"
+  students: []                       # TODO: [{name, id}, ...]
+  github_repo: "TODO: https://github.com/<org>/<repo>"
+  credentials_file: "credentials.json"
+  token_file: "token.json"
+  gmail_scopes: ["https://www.googleapis.com/auth/gmail.send"]
+
+# --- Logging / replay ---
+logging:
+  level: "INFO"
+  results_dir: "results"
+  logs_dir: "logs"
