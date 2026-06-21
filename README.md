@@ -21,6 +21,7 @@ Assignment: Dr. Yoram Segal, *"Dual AI Agent race via MCP"*. Version **1.00**.
 ## Install
 
 ```bash
+git clone https://github.com/yosefshanaa/HW6.git && cd HW6
 uv sync                 # core + dev dependencies; creates .venv and uv.lock
 uv sync --extra mcp     # add FastMCP (only needed to run the network MCP servers)
 uv sync --extra gmail   # add Google client libs (only needed for real email sending)
@@ -120,6 +121,15 @@ results/          per-series logs + report.json (git-ignored)
 
 All consumers (CLI, GUI, reporting) call the **SDK** (`cop_thief.sdk.sdk.CopThiefSDK`); every
 external API call goes through the **API Gatekeeper**.
+
+## Status & remaining inputs
+
+The local pipeline is complete and verified (81 tests, 97% coverage, ruff clean, autonomous
+JSON-only report). See [`docs/SUBMISSION_REPORT.md`](docs/SUBMISSION_REPORT.md) for a one-page
+overview. Items still gated on **external** accounts/credentials (live Gmail send, cloud HTTPS
+deploy, partner bonus match, team/student details, LLM key) are listed in
+[`docs/TODO.md` §External Inputs Needed](docs/TODO.md#external-inputs-needed) — these are documented,
+not faked.
 
 ## License
 
