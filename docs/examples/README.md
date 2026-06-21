@@ -9,6 +9,8 @@ Small, curated, **non-secret** evidence from a local run of the autonomous pipel
 - **`sample_sub_game_excerpt.jsonl`** — the first six timestamped turn records of sub-game 1
   (one JSON object per line): observation, natural-language `message` (note the Thief's **bluff**),
   committed `action`, validation, and resulting board state.
+- **`sample_web_gui.html`** + **[`WEB_GUI.md`](WEB_GUI.md)** — a self-contained browser-GUI replay
+  of one completed sub-game, plus how to launch/screenshot it (`uv run cop-thief-web-gui`).
 
 Reproduce:
 

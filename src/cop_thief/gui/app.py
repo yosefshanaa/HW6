@@ -9,53 +9,19 @@ from __future__ import annotations
 
 import argparse
 
+from cop_thief.gui.render import board_cells, board_to_text, fog_cells
 from cop_thief.sdk.sdk import CopThiefSDK
 from cop_thief.shared.replay import ReplayStore
 
 
 def render_board(snapshot: dict, grid_size: list[int]) -> str:
     """Render a board snapshot as text (C=cop, T=thief, #=barrier, .=empty)."""
-    rows, cols = grid_size
-    cells = [["." for _ in range(cols)] for _ in range(rows)]
-    for r, c in snapshot.get("barriers", []):
-        cells[r][c] = "#"
-    cr, cc = snapshot["cop"]
-    tr, tc = snapshot["thief"]
-    cells[tr][tc] = "T"
-    cells[cr][cc] = "C"
-    return "\n".join(" ".join(row) for row in cells)
+    return board_to_text(board_cells(snapshot, grid_size))
 
 
 def render_fog(observation: dict, grid_size: list[int]) -> str:
-    """Render the acting agent's fog-of-war view (`?`=unknown beyond radius).
-
-    own cell = role letter, visible opponent = other letter, `#`=barrier,
-    `.`=known-empty, `?`=outside the vision radius.
-    """
-    rows, cols = grid_size
-    own = observation["own_cell"]
-    radius = observation["vision_radius"]
-    me = "C" if observation["role"] == "cop" else "T"
-    opp = "T" if me == "C" else "C"
-    barriers = {tuple(b) for b in observation.get("visible_barriers", [])}
-    opp_cell = observation.get("visible_opponent")
-    grid = []
-    for r in range(rows):
-        line = []
-        for c in range(cols):
-            dist = max(abs(r - own[0]), abs(c - own[1]))
-            if [r, c] == own:
-                line.append(me)
-            elif dist > radius:
-                line.append("?")
-            elif opp_cell is not None and [r, c] == opp_cell:
-                line.append(opp)
-            elif (r, c) in barriers:
-                line.append("#")
-            else:
-                line.append(".")
-        grid.append(" ".join(line))
-    return "\n".join(grid)
+    """Render the acting agent's fog-of-war view (`?`=unknown beyond radius)."""
+    return board_to_text(fog_cells(observation, grid_size))
 
 
 def replay_file(path: str, grid_size: list[int]) -> None:

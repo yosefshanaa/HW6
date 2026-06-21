@@ -49,14 +49,38 @@ Each run writes, under `results/<timestamp>/`:
   validation, resulting state) for replay/audit.
 - `report.json` — the §9.1 internal-game report.
 
-### Text visualization / replay
+### Three ways to watch a match
+
+| Mode | Command | What you get |
+|---|---|---|
+| **Headless** | `uv run cop-thief` | Autonomous run; JSON-only report on stdout |
+| **Terminal GUI** | `uv run cop-thief-gui` | Text boards + fog-of-war in the terminal |
+| **Browser GUI** | `uv run cop-thief-web-gui` | A local, self-contained HTML page (board, fog, slider, log, scores) |
+
+#### Terminal GUI (text)
 
 ```bash
 uv run cop-thief-gui                                   # live series summary
 uv run cop-thief-gui --replay results/<ts>/sub_game_1.jsonl
 ```
 
-(`C` = cop, `T` = thief, `#` = barrier, `.` = empty.)
+(`C` = cop, `T` = thief, `#` = barrier, `.` = empty; `?` = unseen in the fog view.)
+
+#### Browser GUI
+
+Renders a **self-contained local HTML page** (no network/CDN) and opens it in your default browser —
+board, fog-of-war, a sub-game selector + move slider with ▶ Play, the message/action log, and
+scores:
+
+```bash
+uv run cop-thief-web-gui                               # play a fresh series, then open it
+uv run cop-thief-web-gui --replay results/<ts>/        # replay a whole series directory
+uv run cop-thief-web-gui --replay results/<ts>/sub_game_1.jsonl   # replay one sub-game
+uv run cop-thief-web-gui --no-open --output out.html   # just write the HTML (e.g. headless)
+```
+
+A curated sample page + screenshot notes are in
+[`docs/examples/WEB_GUI.md`](docs/examples/WEB_GUI.md).
 
 ### MCP servers (localhost)
 

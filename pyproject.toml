@@ -24,6 +24,7 @@ gmail = [
 [project.scripts]
 cop-thief = "cop_thief.main:main"
 cop-thief-gui = "cop_thief.gui.app:main"
+cop-thief-web-gui = "cop_thief.gui.web_app:main"
 cop-thief-cop-server = "cop_thief.mcp.cop_server:main"
 cop-thief-thief-server = "cop_thief.mcp.thief_server:main"
 
@@ -58,7 +59,8 @@ source = ["src"]
 omit = [
     "src/cop_thief/main.py",
     "*/tests/*",
-    "src/cop_thief/gui/*",
+    "src/cop_thief/gui/app.py",
+    "src/cop_thief/gui/web_app.py",
     "src/cop_thief/mcp/cop_server.py",
     "src/cop_thief/mcp/thief_server.py",
     "src/cop_thief/mcp/server_app.py",
