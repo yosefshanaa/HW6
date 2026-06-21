@@ -1,0 +1,62 @@
+{
+  "group_name": "TODO: Team-Name",
+  "students": [],
+  "github_repo": "https://github.com/yosefshanaa/HW6",
+  "cop_mcp_url": "TODO: https://cop-mcp.example.run",
+  "thief_mcp_url": "TODO: https://thief-mcp.example.run",
+  "timezone": "Asia/Jerusalem",
+  "sub_games": [
+    {
+      "index": 1,
+      "winner": "cop",
+      "moves_played": 4,
+      "cop_score": 20,
+      "thief_score": 5,
+      "technical_loss": false
+    },
+    {
+      "index": 2,
+      "winner": "cop",
+      "moves_played": 4,
+      "cop_score": 20,
+      "thief_score": 5,
+      "technical_loss": false
+    },
+    {
+      "index": 3,
+      "winner": "cop",
+      "moves_played": 5,
+      "cop_score": 20,
+      "thief_score": 5,
+      "technical_loss": false
+    },
+    {
+      "index": 4,
+      "winner": "thief",
+      "moves_played": 25,
+      "cop_score": 5,
+      "thief_score": 10,
+      "technical_loss": false
+    },
+    {
+      "index": 5,
+      "winner": "cop",
+      "moves_played": 3,
+      "cop_score": 20,
+      "thief_score": 5,
+      "technical_loss": false
+    },
+    {
+      "index": 6,
+      "winner": "cop",
+      "moves_played": 6,
+      "cop_score": 20,
+      "thief_score": 5,
+      "technical_loss": false
+    }
+  ],
+  "totals": {
+    "cop": 105,
+    "thief": 35
+  }
+}
