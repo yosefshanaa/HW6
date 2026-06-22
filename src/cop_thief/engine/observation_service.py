@@ -44,24 +44,28 @@ def random_start(
     vision_radius: int,
     rng: random.Random,
     max_distance: int | None = None,
+    min_distance: int | None = None,
 ) -> tuple[Position, Position]:
     """Pick a Cop/Thief pair that is distinct and outside each other's radius.
 
     Chosen jointly (not Cop-then-Thief) so a centre cell with no out-of-radius
-    partner can never dead-end the placement. ``max_distance`` optionally caps
-    the Chebyshev start separation (local balance: avoids pathological
-    far-corner starts on a small board); when omitted, behaviour is unchanged.
+    partner can never dead-end the placement. The Chebyshev start separation is
+    always ``> vision_radius``; ``min_distance``/``max_distance`` optionally
+    tighten it further (local balance: a floor avoids trivial first-move
+    captures, a cap avoids pathological far-corner starts). Omitted = unchanged.
     """
+    floor = vision_radius if min_distance is None else max(vision_radius, min_distance - 1)
     cells = all_cells(grid_size)
     pairs = [
         (a, b)
         for a in cells
         for b in cells
-        if vision_radius < a.chebyshev(b) and (max_distance is None or a.chebyshev(b) <= max_distance)
+        if floor < a.chebyshev(b) and (max_distance is None or a.chebyshev(b) <= max_distance)
     ]
     if not pairs:
         raise ValueError(
-            f"no valid start pair for vision_radius={vision_radius}, max_distance={max_distance}"
+            f"no valid start pair for vision_radius={vision_radius}, "
+            f"min_distance={min_distance}, max_distance={max_distance}"
         )
     return rng.choice(pairs)
 

@@ -37,6 +37,17 @@ def _nearest_barrier_dist(cell: Position, obs: Observation) -> int:
     return min(cell.chebyshev(b) for b in obs.visible_barriers)
 
 
+def _track(obs: Observation, memory: dict) -> Position | None:
+    """Record this agent's path; return the cell it stood on last move-turn.
+
+    Used to avoid immediate two-cell oscillation (the ``c != prev`` tie-break),
+    the loop that previously let a blind Cop bounce on one pair forever.
+    """
+    prev = memory.get("here")
+    memory["here"] = obs.own_cell
+    return prev
+
+
 class HeuristicCop(Strategy):
     """Pursuit with tactical barriers: capture > wall (herd) > close distance."""
 
@@ -68,10 +79,9 @@ class HeuristicCop(Strategy):
         The two-cell trigger only fires when the Thief is *visible at distance 2*.
         At radius 2 that is the common case and herding is **decisive** (barrier
         ablation: 0%→100% Cop). At the radius-1 local default the Cop can never see
-        a distance-2 Thief, so it places no barriers and plays pure pursuit — a
-        roughly even contest (~49% Cop with the capped start spread). Barriers are
-        thus a visibility-gated tool, not an always-on win button (see
-        docs/EXPERIMENTS.md).
+        a distance-2 Thief, so it places no barriers and plays pure pursuit/search —
+        a genuine contest (~56% Cop with distance-3 starts). Barriers are thus a
+        visibility-gated tool, not an always-on win button (see docs/EXPERIMENTS.md).
         """
         if thief is None:
             return False
@@ -86,8 +96,20 @@ class HeuristicCop(Strategy):
         return len(cells) >= 3
 
     def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
-        target = _reference(obs, memory) or grid_center(obs.grid_size)
-        return min(cells, key=lambda c: (c.chebyshev(target), c.row, c.col))
+        prev = _track(obs, memory)
+        if obs.visible_opponent is not None:
+            # Fresh sighting: pursue exactly as before (unchanged pursuit strength).
+            return min(cells, key=lambda c: (c.chebyshev(obs.visible_opponent), c.row, c.col))
+        # Blind, or only a *stale* memory of the Thief: head toward that last-known
+        # cell (else the centre) but avoid cells just occupied, so the Cop covers
+        # ground instead of bouncing on one pair forever — the loop that let the
+        # Thief "win" by repetition while the Cop oscillated near the centre.
+        target = memory.get("last_known_opponent") or grid_center(obs.grid_size)
+        recent = memory.setdefault("recent", [])
+        pick = min(cells, key=lambda c: (c in recent, c == prev, c.chebyshev(target), c.row, c.col))
+        recent.append(obs.own_cell)
+        del recent[:-4]
+        return pick
 
     def compose_message(self, obs: Observation, action: Action, memory: dict) -> str:
         if action.type is ActionType.BARRIER:
@@ -103,21 +125,26 @@ class HeuristicThief(Strategy):
     Thief first keeps a safe gap (≥2 from the Cop, so it cannot be captured next turn),
     then prefers cells with the most escape routes, the greatest clearance from
     barriers, the greatest raw distance, and finally the most central spot — a sound,
-    deterministic evasion. At radius 2 (the agreed bonus-match value) the Cop can
-    track and barrier-herd it to a near-certain capture; at the radius-1 local
-    default (with a capped start distance) the fog lets it break contact and win
-    about half the sub-games (see docs/EXPERIMENTS.md).
+    deterministic evasion. When it has *not* sighted the Cop it stays mobile and
+    avoids backtracking (rather than marching into the centre, which used to walk it
+    into the Cop). At radius 2 the Cop can track and barrier-herd it to a near-certain
+    capture; at the radius-1 local default the fog lets it break contact and win
+    about 40% of sub-games (see docs/EXPERIMENTS.md).
     """
 
     def __init__(self) -> None:
         super().__init__(PlayerRole.THIEF)
 
     def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
+        prev = _track(obs, memory)
         ref = _reference(obs, memory)
         center = grid_center(obs.grid_size)
         if ref is None:
-            # Blind: head for open space near the centre to keep escape routes open.
-            return max(cells, key=lambda c: (_mobility(c, obs), -c.chebyshev(center), c.row, c.col))
+            # Blind: keep escape routes open and don't backtrack; no march to the
+            # dead centre (that walked the Thief straight into a central Cop).
+            return max(cells, key=lambda c: (c != prev, _mobility(c, obs), c.row, c.col))
+        # Seeing / last-known: original mobility-aware evasion (unchanged so the
+        # documented radius-2 behaviour is preserved).
         return max(
             cells,
             key=lambda c: (

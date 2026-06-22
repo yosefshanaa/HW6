@@ -180,10 +180,11 @@ it stays uncapturable, then keeps to open space and clearance from walls.
 Balance on the fixed 5×5 is set by **vision radius + start spread** (team-chosen parameters, not the
 fixed grid rule):
 
-- **Local default — a balanced demo.** `vision_radius: 1` + `start_distance_max: 3` removes
-  pathological far-corner starts and yields a **roughly even contest (~49% Cop** over seeds
-  1000–1029, 88 Cop / 92 Thief). At radius 1 the Cop can't see a distance-2 Thief, so barriers stay
-  dormant and it plays pure pursuit.
+- **Local default — a balanced demo.** `vision_radius: 1` with fixed distance-3 starts
+  (`start_distance_min: 3`, `start_distance_max: 3`) and competent, non-looping agents yields a
+  **genuine contest (~56% Cop** over seeds 1000–1029, 101 Cop / 79 Thief). At radius 1 the Cop can't
+  see a distance-2 Thief, so barriers stay dormant and it pursues/searches (the blind Cop patrols
+  instead of oscillating — the old loop that produced repetitive draws is fixed).
 - **Radius 2 (bonus-match setting) is Cop-favored.** With near-full visibility on the tiny board the
   Cop barrier-herds a competent evader to a near-certain capture; the
   [barrier ablation](docs/EXPERIMENTS.md#barrier-ablation-cop-win-rate-with-vs-without-barriers)

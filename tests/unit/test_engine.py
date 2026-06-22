@@ -129,6 +129,21 @@ def test_cop_barrier_then_must_move_off():
     assert ref.state.is_barrier(Position(2, 2))
 
 
+def test_barrier_is_single_action_cop_does_not_move():
+    """Placing a barrier consumes the whole turn: the Cop stays put, exactly one
+    action is committed, and the turn passes to the Thief (no double move)."""
+    ref = make_referee()
+    ref.reset(cop=Position(2, 2), thief=Position(0, 0))
+    ref.apply(PlayerRole.THIEF, Action.move(Position(0, 1)))
+    before = ref.state.cop
+    res = ref.apply(PlayerRole.COP, Action.barrier(Position(2, 2)))
+    assert res.accepted is True
+    assert ref.state.cop == before              # the Cop did NOT also move
+    assert ref.state.is_barrier(before)         # the barrier sits on its own cell
+    assert ref.state.barriers_placed() == 1     # exactly one committed action
+    assert ref.state.turn is PlayerRole.THIEF   # turn handed back to the Thief
+
+
 def test_no_state_raises():
     ref = make_referee()
     try:

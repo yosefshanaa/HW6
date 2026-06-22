@@ -47,6 +47,7 @@ class Orchestrator:
             self.referee.vision_radius,
             self.rng,
             max_distance=self.config.get("start_distance_max"),
+            min_distance=self.config.get("start_distance_min"),
         )
 
     def play_sub_game(self, index: int, attempt: int = 1) -> SubGameResult:

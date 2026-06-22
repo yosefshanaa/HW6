@@ -56,9 +56,10 @@ reward for reaching the goal/capture.
   pursuit cannot corner a competent evader, so the Cop herds with barriers and — on a near-fully-observed
   5×5 — reliably wins (barriers are **decisive** there: ablation 0%→100%). Balance is set by the
   **vision radius** and **start spread**, team-chosen parameters (not the fixed 5×5 rule): the **local
-  series defaults to radius 1 with a start-distance cap (`start_distance_max: 3`)**, where the Cop can't
-  see a distance-2 Thief, places no barriers, and the contest is roughly even (**~49% Cop** over seeds
-  1000–1029). The bonus match keeps radius 2 with unbounded starts (`match.vision_radius`). See
+  series defaults to radius 1 with fixed distance-3 starts (`start_distance_min`/`max: 3`)** and
+  competent, non-looping agents (the blind Cop patrols/searches instead of oscillating; the blind Thief
+  no longer marches into the centre), giving a genuine contest (**~56% Cop** over seeds 1000–1029). The
+  bonus match keeps radius 2 with unbounded starts (`match.vision_radius`). See
   [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 ### 2.3 Optional Q-Learning

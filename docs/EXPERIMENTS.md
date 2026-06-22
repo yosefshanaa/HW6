@@ -90,10 +90,13 @@ model, not the barriers**:
 the **fixed** 5×5 the only lever that yields a balanced game is the (team-chosen, *not* rule-fixed)
 **vision radius** (plus the start spread) — every *strategy/barrier* knob is bimodal (budget 1→2 flips
 10%→97%; decay 2→3 flips 33%→100%; randomising the Thief stays 100%; see the sensitivity table above).
-We therefore **ship the local series at radius 1 with a start-distance cap (`start_distance_max: 3`)**:
-removing pathological far-corner starts on the 5×5 brings the contest to **~49% Cop over seeds
-1000–1029** (88 Cop / 92 Thief) — an even game, not a sweep. The **bonus inter-group match** keeps the
-agreed **radius 2** with **unbounded** starts (`SHARED_MATCH_RULES` §2.9, via `match.vision_radius`),
+We therefore **ship the local series at radius 1 with fixed distance-3 starts (`start_distance_min: 3`,
+`start_distance_max: 3`)** and **competent, non-looping agents**: the blind Cop now patrols/searches
+instead of oscillating near the centre (the old loop bug that *looked* balanced but produced repetitive
+draws and trivial first-move collisions), and the blind Thief no longer marches into the centre. The
+result is a genuine contest — **~56% Cop over seeds 1000–1029** (101 Cop / 79 Thief), with only ~7% of
+sub-games ending in an immediate (≤2-move) capture. The **bonus inter-group match** keeps the agreed
+**radius 2** with **unbounded** starts (`SHARED_MATCH_RULES` §2.9, via `match.vision_radius`),
 where the game is structurally **Cop-favoured** — expected pursuit-evasion on a near-fully-observed
 board, and *symmetric* across the role split, so the bonus stays fair even though it is Cop-dominated.
 

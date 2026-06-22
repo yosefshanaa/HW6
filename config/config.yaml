@@ -22,9 +22,11 @@ scoring:
 # --- Start positions ---
 start_mode: random        # "random" (seeded) or "fixed"
 seed: 1234                # shared seed for reproducible starts
-start_distance_max: 3     # cap Chebyshev start separation (local balance: avoids
-                          # distance-4 far-corner starts on 5x5). Omit/null = unbounded.
-                          # The bonus match samples unbounded at its agreed radius.
+start_distance_min: 3     # floor on Chebyshev start separation (local balance: avoids
+                          # distance-2 starts that trivially capture the blind Thief).
+start_distance_max: 3     # cap Chebyshev start separation (avoids distance-4 far-corner
+                          # starts on 5x5). With min==max==3, starts are exactly 3 apart.
+                          # Omit/null = unbounded. The bonus match samples unbounded at r2.
 fixed_start:              # used only when start_mode == "fixed"
   cop: [0, 0]
   thief: [4, 4]

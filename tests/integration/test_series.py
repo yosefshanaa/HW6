@@ -94,6 +94,40 @@ def test_cop_uses_barriers_opportunistically_not_every_turn(config, tmp_path):
     assert cop_moves > cop_barriers  # but mostly pursuit; barriers are the exception
 
 
+def test_barrier_turns_are_single_action_in_logs(config, tmp_path):
+    """Authoritative JSONL proof: every Cop barrier turn places a barrier on the
+    Cop's own cell and does NOT also move the Cop (one committed action/turn).
+    Uses radius 2 so the Cop actually exercises barriers."""
+    Orchestrator(_with(config, vision_radius=2), results_dir=tmp_path).play_series()
+    saw_barrier = False
+    for log in sorted(tmp_path.glob("*/sub_game_*.jsonl")):
+        prev_cop = None
+        for line in log.read_text(encoding="utf-8").splitlines():
+            rec = json.loads(line)
+            post = rec["resulting_state"]["cop"]
+            if (rec["role"] == PlayerRole.COP.value
+                    and rec["action"]["type"] == ActionType.BARRIER.value):
+                saw_barrier = True
+                assert rec["action"]["to"] == post           # barrier on the Cop's cell
+                assert prev_cop is None or post == prev_cop   # Cop did not move
+            prev_cop = post
+    assert saw_barrier, "no barrier turn was exercised — test scenario is vacuous"
+
+
+def test_no_degenerate_cop_oscillation_loop(config, tmp_path):
+    """Regression for the reported loop: across a default seed sweep, no sub-game
+    leaves the Cop bouncing between only one or two cells for the whole game."""
+    for seed in range(1000, 1006):
+        Orchestrator(_with(config, seed=seed, start_mode="random"),
+                     results_dir=tmp_path / str(seed)).play_series()
+    for log in tmp_path.glob("*/*/sub_game_*.jsonl"):
+        cop_cells = [tuple(json.loads(line)["resulting_state"]["cop"])
+                     for line in log.read_text(encoding="utf-8").splitlines()
+                     if json.loads(line)["role"] == PlayerRole.COP.value]
+        if len(cop_cells) >= 8:
+            assert len(set(cop_cells)) >= 3, f"Cop looped in {log}: {cop_cells}"
+
+
 def test_default_config_series_is_balanced_not_all_cop(config, tmp_path):
     """The shipped LOCAL default (radius 1 + start_distance_max) must be a real,
     roughly even contest over a seed sweep — not a Cop sweep. Guards against
