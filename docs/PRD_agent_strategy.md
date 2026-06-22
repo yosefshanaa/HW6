@@ -41,12 +41,22 @@ reward for reaching the goal/capture.
 - Always returns a **legal** action for the role (the loop must never stall).
 
 ### 2.2 Baseline heuristic
-- **Cop:** minimize Chebyshev distance to the last-known / most-likely Thief cell; place a barrier
-  (within the ≤5 budget) when it cuts off escape and the Thief is near the edge/known.
-- **Thief:** maximize Chebyshev distance from the last-known Cop cell; avoid barriers and board edges
-  that reduce escape options.
+- **Cop:** capture if the Thief is one king-step away; else minimize Chebyshev distance to the
+  last-known / most-likely Thief cell. Place a barrier (within the ≤5 budget) **only** opportunistically
+  — when the Thief is *currently visible*, exactly two cells away, pinned on a board edge, and the Cop
+  keeps ≥3 safe exits (so the wall never sacrifices a capture or self-traps).
+- **Thief (mobility-aware):** first stay **uncapturable** (≥2 cells from the believed Cop cell), then
+  prefer cells with the most escape routes and the greatest clearance from barriers, using raw
+  distance and centrality only as tie-breaks. This implements the "avoid barriers and board edges that
+  reduce escape options" intent — the earlier *maximize-distance* rule fled into corners and
+  self-trapped, which (not the barriers) is what handed the Cop nearly every game.
 - Operates on partial info: when the opponent is outside the vision radius, fall back to belief from
   messages + memory.
+- **Outcome (deterministic, documented).** On the agreed spec board (5×5, radius 2) equal-speed
+  pursuit cannot corner a competent evader, so the Cop must herd with barriers and — on a small,
+  near-fully-observed board — reliably wins; balance emerges only when vision is limited relative to
+  the board. This is a property of the observation model, not the barrier rule (see
+  [`EXPERIMENTS.md`](EXPERIMENTS.md)).
 
 ### 2.3 Optional Q-Learning
 - State = discretized positions (e.g., agent cell + relative opponent belief); actions = 8 moves

@@ -131,7 +131,17 @@ landing on the Thief; the Thief wins by surviving 25 moves. Scoring: Cop win →
 
 The baseline heuristic **Cop** pursues to capture and **occasionally drops a tactical barrier** to
 herd a near, edge-pinned Thief — deterministic, always legal, and never sacrificing an available
-capture or self-trapping (see [`docs/PRD_agent_strategy.md`](docs/PRD_agent_strategy.md)).
+capture or self-trapping. The heuristic **Thief** is **mobility-aware**: it stays uncapturable
+(≥2 cells from the Cop), then keeps to open space and clearance from walls instead of fleeing into a
+corner (see [`docs/PRD_agent_strategy.md`](docs/PRD_agent_strategy.md)).
+
+On the **agreed** spec board (5×5, vision radius 2) the game is structurally **Cop-favoured**: equal-
+speed pursuit cannot corner a competent evader, so the Cop relies on tactical barriers, and on a
+small, near-fully-observed board that herding reliably works. This is expected pursuit-evasion
+behaviour, **not** an over-eager barrier rule — the [barrier ablation](docs/EXPERIMENTS.md#2-results-60-sub-games-per-cell)
+shows barriers make **no difference** once vision is genuinely limited. A balanced ~50/50 contest is
+a config choice (smaller vision relative to the board, e.g. radius 1) available with no code change;
+see [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
 
 ## Reporting (Gmail)
 
@@ -169,7 +179,7 @@ external API call goes through the **API Gatekeeper**.
 
 ## Status & remaining inputs
 
-The local pipeline is complete and verified (85 tests, 97% coverage, ruff clean, autonomous
+The local pipeline is complete and verified (104 tests, 97% coverage, ruff clean, autonomous
 JSON-only report). See [`docs/SUBMISSION_REPORT.md`](docs/SUBMISSION_REPORT.md) for a one-page
 overview. Items still gated on **external** accounts/credentials (live Gmail send, cloud HTTPS
 deploy, partner bonus match, team/student details, LLM key) are listed in

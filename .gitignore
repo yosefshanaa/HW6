@@ -33,6 +33,7 @@ logs/
 results/*.jsonl
 results/*.json
 results/*.html
+results/*/
 !results/.gitkeep
 
 # --- IDE / OS / tooling ---

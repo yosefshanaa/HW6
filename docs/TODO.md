@@ -15,13 +15,18 @@
 
 ## Status Snapshot (2026-06-22)
 
-**Done & verified locally** (75 tests, 97% coverage, ruff clean, pushed to `origin/main`):
+**Done & verified locally** (104 tests, 97% coverage, ruff clean, pushed to `origin/main`):
 - Phases 1–10, 13–14: scaffold, config/version/secrets, engine, partial observation, baseline
   agents, MCP servers/tools/client, orchestrator + Technical-Loss, logging/replay, internal+bonus
   report JSON, **mocked** Gmail reporter, SDK + CLI, GUI text renderer + replay, CI workflow,
   prompt book.
 - `uv run cop-thief` plays a full clean 6-sub-game series autonomously and emits a **JSON-only**
   report to stdout (logs go to stderr).
+- **Strategy audit (2026-06-22):** local series is fixed **Cop-vs-Thief** for all 6 sub-games
+  (role-swap only in the bonus); confirmed, no model change. Replaced the corner-fleeing Thief with a
+  **mobility-aware** evader and tightened the Cop barrier guard — the real imbalance was the Thief,
+  not the barriers. At the agreed 5×5/r2 the Cop is structurally favoured; balance is a vision/board
+  config choice (see [`EXPERIMENTS.md`](EXPERIMENTS.md)).
 
 **Blocked on external inputs (documented, not faked):**
 - **Live Gmail send** — needs the team's Google account + OAuth (`credentials.json`/`token.json`);

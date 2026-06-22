@@ -82,6 +82,24 @@ def test_thief_opens_distance_when_opponent_visible():
     assert action.to.chebyshev(Position(2, 1)) > Position(2, 2).chebyshev(Position(2, 1))
 
 
+def test_thief_avoids_self_trapping_corner():
+    # The Cop is two cells away; fleeing straight to the corner (old behaviour)
+    # would self-trap, so the mobility-aware Thief takes an open interior cell.
+    o = obs(PlayerRole.THIEF, Position(1, 1), opponent=Position(3, 3))
+    action = make_strategy(PlayerRole.THIEF).decide(o, {})
+    assert action.type is ActionType.MOVE
+    assert action.to != Position(0, 0)                       # not the corner
+    assert 0 < action.to.row < 4 and 0 < action.to.col < 4   # open interior cell
+    assert action.to.chebyshev(Position(3, 3)) >= 2          # still uncapturable
+
+
+def test_thief_blind_drifts_to_open_centre():
+    # No opponent in view and no memory: head for open space, not deeper into a corner.
+    o = obs(PlayerRole.THIEF, Position(0, 0))
+    action = make_strategy(PlayerRole.THIEF).decide(o, {})
+    assert action.to == Position(1, 1)                       # most central legal cell
+
+
 def test_decision_is_always_legal():
     barriers = [Position(1, 1), Position(1, 2), Position(2, 1)]
     o = obs(PlayerRole.THIEF, Position(2, 2), opponent=Position(0, 0), barriers=barriers)

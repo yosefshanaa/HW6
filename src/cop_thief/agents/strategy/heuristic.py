@@ -22,6 +22,21 @@ def _on_edge(pos: Position, grid_size: list[int]) -> bool:
     return pos.row in (0, grid_size[0] - 1) or pos.col in (0, grid_size[1] - 1)
 
 
+def _mobility(cell: Position, obs: Observation) -> int:
+    """Count of legal king-moves out of ``cell`` (open space = more escape routes)."""
+    blocked = set(obs.visible_barriers)
+    return sum(
+        1 for n in cell.neighbors8() if n.in_bounds(obs.grid_size) and n not in blocked
+    )
+
+
+def _nearest_barrier_dist(cell: Position, obs: Observation) -> int:
+    """Chebyshev distance to the closest visible barrier (board span when none seen)."""
+    if not obs.visible_barriers:
+        return obs.grid_size[0] + obs.grid_size[1]
+    return min(cell.chebyshev(b) for b in obs.visible_barriers)
+
+
 class HeuristicCop(Strategy):
     """Pursuit with tactical barriers: capture > wall (herd) > close distance."""
 
@@ -43,12 +58,14 @@ class HeuristicCop(Strategy):
     def _should_barrier(
         self, obs: Observation, memory: dict, cells: list[Position], thief: Position | None
     ) -> bool:
-        """Wall the Cop's own cell only when it usefully herds a near, edge-pinned Thief.
+        """Wall the Cop's own cell only on a genuine, opportunistic herding chance.
 
         Deterministic guards: budget left; not already standing on a barrier; Thief
-        visible and exactly two cells away (so no capture is sacrificed); Thief pinned
-        on a board edge (walling shrinks its space); and ≥2 safe exits so we don't
-        self-trap.
+        *currently visible* and exactly two cells away (so no capture is sacrificed
+        and we never wall a stale phantom); Thief pinned on a board edge (walling
+        shrinks its space); and ≥3 safe exits so the wall can never self-trap. Against
+        a competent (mobility-aware) Thief this fires in only ~half of sub-games and
+        about once per game — useful, not overpowering (see docs/EXPERIMENTS.md).
         """
         if thief is None:
             return False
@@ -60,7 +77,7 @@ class HeuristicCop(Strategy):
             return False
         if not _on_edge(thief, obs.grid_size):
             return False
-        return len(cells) >= 2
+        return len(cells) >= 3
 
     def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
         target = _reference(obs, memory) or grid_center(obs.grid_size)
@@ -73,17 +90,39 @@ class HeuristicCop(Strategy):
 
 
 class HeuristicThief(Strategy):
-    """Evasion: maximise Chebyshev distance from the (believed) Cop cell."""
+    """Mobility-aware evasion: stay uncapturable, then keep open space and dodge walls.
+
+    The old "maximise distance" rule fled straight into corners and self-trapped —
+    that, not the barriers, is what let the Cop win nearly every game. Instead the
+    Thief first keeps a safe gap (≥2 from the Cop, so it cannot be captured next turn),
+    then prefers cells with the most escape routes, the greatest clearance from
+    barriers, the greatest raw distance, and finally the most central spot — a sound,
+    deterministic evasion. On the small, near-fully-observed spec board (5×5, radius 2)
+    a competent Cop still corners it; the contest only balances when vision is limited
+    relative to the board (see docs/EXPERIMENTS.md).
+    """
 
     def __init__(self) -> None:
         super().__init__(PlayerRole.THIEF)
 
     def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
         ref = _reference(obs, memory)
+        center = grid_center(obs.grid_size)
         if ref is None:
-            ref = grid_center(obs.grid_size)  # drift to centre when blind
-            return min(cells, key=lambda c: (c.chebyshev(ref), c.row, c.col))
-        return max(cells, key=lambda c: (c.chebyshev(ref), -c.row, -c.col))
+            # Blind: head for open space near the centre to keep escape routes open.
+            return max(cells, key=lambda c: (_mobility(c, obs), -c.chebyshev(center), c.row, c.col))
+        return max(
+            cells,
+            key=lambda c: (
+                min(c.chebyshev(ref), 2),
+                _mobility(c, obs),
+                _nearest_barrier_dist(c, obs),
+                c.chebyshev(ref),
+                -c.chebyshev(center),
+                c.row,
+                c.col,
+            ),
+        )
 
     def compose_message(self, obs: Observation, action: Action, memory: dict) -> str:
         # Bluff: name a plausible but different corner to mislead the Cop.
