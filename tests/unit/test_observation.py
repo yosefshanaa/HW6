@@ -85,6 +85,15 @@ def test_random_start_raises_when_band_empty():
         random_start([5, 5], vision_radius=1, rng=random.Random(0), max_distance=1)
 
 
+def test_random_start_respects_min_distance():
+    """A start-distance floor keeps the Thief out of trivial first-move capture."""
+    rng = random.Random(3)
+    for _ in range(200):
+        cop, thief = random_start([5, 5], vision_radius=1, rng=rng,
+                                  min_distance=3, max_distance=3)
+        assert cop.chebyshev(thief) == 3
+
+
 def test_fixed_start_reads_config():
     cop, thief = fixed_start({"cop": [0, 0], "thief": [4, 4]})
     assert cop == Position(0, 0)
