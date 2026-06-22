@@ -52,11 +52,13 @@ reward for reaching the goal/capture.
   self-trapped, which (not the barriers) is what handed the Cop nearly every game.
 - Operates on partial info: when the opponent is outside the vision radius, fall back to belief from
   messages + memory.
-- **Outcome (deterministic, documented).** On the agreed spec board (5×5, radius 2) equal-speed
-  pursuit cannot corner a competent evader, so the Cop must herd with barriers and — on a small,
-  near-fully-observed board — reliably wins; balance emerges only when vision is limited relative to
-  the board. This is a property of the observation model, not the barrier rule (see
-  [`EXPERIMENTS.md`](EXPERIMENTS.md)).
+- **Outcome (deterministic, documented).** At **radius 2** (the agreed bonus-match value) equal-speed
+  pursuit cannot corner a competent evader, so the Cop herds with barriers and — on a near-fully-observed
+  5×5 — reliably wins (barriers are **decisive** there: ablation 0%→100%). Balance is set by the
+  **vision radius**, a team-chosen parameter (not the fixed 5×5 rule): the **local series defaults to
+  radius 1**, where the Cop can't see a distance-2 Thief, places no barriers, and the contest balances
+  (~67% Cop, Thief escapes ~1/3). The bonus match keeps radius 2 (`match.vision_radius`). See
+  [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 ### 2.3 Optional Q-Learning
 - State = discretized positions (e.g., agent cell + relative opponent belief); actions = 8 moves

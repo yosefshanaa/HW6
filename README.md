@@ -56,6 +56,7 @@ Each run writes, under `results/<timestamp>/`:
 | **Headless** | `uv run cop-thief` | Autonomous run; JSON-only report on stdout |
 | **Terminal GUI** | `uv run cop-thief-gui` | Text boards + fog-of-war in the terminal |
 | **Browser GUI** | `uv run cop-thief-web-gui` | A local, self-contained HTML page (board, fog, slider, log, scores) |
+| **Match dry-run** | `uv run cop-thief-match` | Two-team bonus series on loopback; §9.2 JSON report (see [below](#inter-group-match-dry-run-phase-12-de-risking)) |
 
 #### Terminal GUI (text)
 
@@ -101,6 +102,23 @@ Each server exposes the six tools (`get_observation`, `submit_turn`, `receive_me
 `validate_action`, `get_match_status`, `health_check`) and **does not host the LLM**. The
 orchestrator/MCP client drives the game and (in cloud mode) calls the LLM provider.
 
+### Inter-group match dry-run (Phase 12 de-risking)
+
+```bash
+uv run cop-thief-match                          # local two-team series; §9.2 JSON on stdout
+uv run cop-thief-match --results-dir results    # also writes logs + bonus_report.json there
+```
+
+Models **two independent team systems on one machine** playing the fixed 6-sub-game bonus series
+over the loopback MCP transport — a faithful rehearsal of the real cross-team match with **zero
+external endpoints**. Per the [shared spec](SHARED_MATCH_RULES.md), the **cop side owns the
+authoritative referee** each sub-game while the thief side runs a **mirror engine**; every committed
+turn is reconciled and any divergence is **flagged** (the "mirror-and-flag" rule). Roles **swap at
+sub-game 4**, and the run emits the §9.2 report with `totals_by_group`, `bonus_claim`, and
+`mutual_agreement: true`. With two identical heuristic peers the series is a symmetric 75–75 tie and
+the engines reconcile cleanly. To play a **real** partner, the same orchestration points at their
+four MCP URLs + tokens (exchanged out of band) instead of the loopback transport.
+
 ## Configuration
 
 All tunables live in [`config/`](config/) — never hard-coded:
@@ -129,19 +147,21 @@ landing on the Thief; the Thief wins by surviving 25 moves. Scoring: Cop win →
 (Chebyshev) — the game is a **Dec-POMDP** ⟨n, S, {Aᵢ}, P, R, {Ωᵢ}, O, γ⟩
 (see [`docs/PRD_partial_observability.md`](docs/PRD_partial_observability.md)).
 
-The baseline heuristic **Cop** pursues to capture and **occasionally drops a tactical barrier** to
-herd a near, edge-pinned Thief — deterministic, always legal, and never sacrificing an available
-capture or self-trapping. The heuristic **Thief** is **mobility-aware**: it stays uncapturable
-(≥2 cells from the Cop), then keeps to open space and clearance from walls instead of fleeing into a
-corner (see [`docs/PRD_agent_strategy.md`](docs/PRD_agent_strategy.md)).
+The baseline heuristic **Cop** pursues to capture and — when it can see a distance-2 Thief (radius 2) —
+**drops a tactical barrier** to herd a near, edge-pinned Thief, deterministic, always legal, and never
+sacrificing an available capture or self-trapping. The heuristic **Thief** is **mobility-aware**: it
+stays uncapturable (≥2 cells from the Cop), then keeps to open space and clearance from walls instead
+of fleeing into a corner (see [`docs/PRD_agent_strategy.md`](docs/PRD_agent_strategy.md)).
 
-On the **agreed** spec board (5×5, vision radius 2) the game is structurally **Cop-favoured**: equal-
-speed pursuit cannot corner a competent evader, so the Cop relies on tactical barriers, and on a
-small, near-fully-observed board that herding reliably works. This is expected pursuit-evasion
-behaviour, **not** an over-eager barrier rule — the [barrier ablation](docs/EXPERIMENTS.md#2-results-60-sub-games-per-cell)
-shows barriers make **no difference** once vision is genuinely limited. A balanced ~50/50 contest is
-a config choice (smaller vision relative to the board, e.g. radius 1) available with no code change;
-see [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
+**Balance is set by the vision radius (a team-chosen parameter, not the fixed 5×5 rule).** The **local
+series defaults to radius 1**, which keeps a genuine contest — **~67% Cop, the Thief escapes ~1/3 of
+sub-games**. At radius 1 the Cop can't see a distance-2 Thief, so it plays pure pursuit and barriers
+stay dormant. Raise vision to **radius 2** — the value the **bonus inter-group match** uses
+(`match.vision_radius`) — and the 5×5 board is near-fully observed: the Cop barrier-herds a competent
+evader to a near-certain capture, and the [barrier ablation](docs/EXPERIMENTS.md#barrier-ablation-cop-win-rate-with-vs-without-barriers)
+shows barriers flip the game **0%→100%** there (they are decisive at r2, inoperative at r1). That Cop
+dominance is expected pursuit-evasion on a tiny, fully-seen board — and *symmetric* across the role
+split, so the bonus stays fair; see [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
 
 ## Reporting (Gmail)
 

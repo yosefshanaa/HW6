@@ -63,9 +63,14 @@ class HeuristicCop(Strategy):
         Deterministic guards: budget left; not already standing on a barrier; Thief
         *currently visible* and exactly two cells away (so no capture is sacrificed
         and we never wall a stale phantom); Thief pinned on a board edge (walling
-        shrinks its space); and ≥3 safe exits so the wall can never self-trap. Against
-        a competent (mobility-aware) Thief this fires in only ~half of sub-games and
-        about once per game — useful, not overpowering (see docs/EXPERIMENTS.md).
+        shrinks its space); and ≥3 safe exits so the wall can never self-trap.
+
+        The two-cell trigger only fires when the Thief is *visible at distance 2*.
+        At radius 2 that is the common case and herding is **decisive** (barrier
+        ablation: 0%→100% Cop). At the radius-1 local default the Cop can never see
+        a distance-2 Thief, so it places no barriers and plays pure pursuit — a
+        balanced ~67% Cop. Barriers are thus a visibility-gated tool, not an
+        always-on win button (see docs/EXPERIMENTS.md).
         """
         if thief is None:
             return False
@@ -97,9 +102,10 @@ class HeuristicThief(Strategy):
     Thief first keeps a safe gap (≥2 from the Cop, so it cannot be captured next turn),
     then prefers cells with the most escape routes, the greatest clearance from
     barriers, the greatest raw distance, and finally the most central spot — a sound,
-    deterministic evasion. On the small, near-fully-observed spec board (5×5, radius 2)
-    a competent Cop still corners it; the contest only balances when vision is limited
-    relative to the board (see docs/EXPERIMENTS.md).
+    deterministic evasion. At radius 2 (the agreed bonus-match value) the Cop can
+    track and barrier-herd it to a near-certain capture; at the radius-1 local
+    default the fog lets it break contact and escape ~1/3 of sub-games (see
+    docs/EXPERIMENTS.md).
     """
 
     def __init__(self) -> None:

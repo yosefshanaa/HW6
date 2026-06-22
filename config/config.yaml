@@ -7,7 +7,9 @@ grid_size: [5, 5]          # [rows, cols]; default 5x5
 max_moves: 25              # max Thief moves per sub-game (25 rounds)
 num_games: 6              # sub-games per series
 max_barriers: 5           # max barriers the Cop may place per sub-game
-vision_radius: 2          # king-move (Chebyshev) vision radius
+vision_radius: 1          # local-series default: r1 keeps a balanced contest on 5x5
+                          # (r2 = near-full visibility -> structurally ~100% Cop).
+                          # The bonus match overrides this to the agreed r2 (match.vision_radius).
 movement_mode: eight_directional
 
 # --- Scoring (PRD §8) ---
@@ -58,6 +60,23 @@ report:
   credentials_file: "credentials.json"
   token_file: "token.json"
   gmail_scopes: ["https://www.googleapis.com/auth/gmail.send"]
+
+# --- Bonus inter-group match (§9.2) ---
+# group_1 = us; group_2 = the partner team. For the local dry-run
+# (`uv run cop-thief-match`) group_2 is a simulated peer on loopback.
+# Real URLs/tokens are exchanged out of band and stay out of this file.
+match:
+  vision_radius: 2                     # agreed bonus-match radius (SHARED_MATCH_RULES §2.9)
+  group_1: "TODO: Team-Name"
+  group_2: "TODO: Partner-Team"
+  github_repo_group_1: "https://github.com/yosefshanaa/HW6"
+  github_repo_group_2: "TODO: https://github.com/partner/HW6"
+  students_group_1: []                 # TODO: [{name, id}, ...]
+  students_group_2: []
+  mcp_url_group_1_cop: "TODO: https://g1-cop-mcp.example.run"
+  mcp_url_group_1_thief: "TODO: https://g1-thief-mcp.example.run"
+  mcp_url_group_2_cop: "TODO: https://g2-cop-mcp.example.run"
+  mcp_url_group_2_thief: "TODO: https://g2-thief-mcp.example.run"
 
 # --- Logging / replay ---
 logging:
