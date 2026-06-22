@@ -74,9 +74,12 @@ def test_cop_dominance_is_observation_driven_not_a_barrier_bug(config, tmp_path)
 
 
 def test_cop_uses_barriers_opportunistically_not_every_turn(config, tmp_path):
-    """Across a full series the Cop both places barriers (a useful tool) and takes
-    plain moves on most turns — it never spends every turn walling."""
-    Orchestrator(config, results_dir=tmp_path).play_series()
+    """At the bonus radius (2, where the Cop can see a distance-2 Thief) the Cop
+    both places tactical barriers AND takes plain moves on most turns — barriers
+    are a real tool used as the exception, never every turn. (At the radius-1
+    local default the Cop never sees a distance-2 Thief, so it places none.)"""
+    r2 = _with(config, vision_radius=2)
+    Orchestrator(r2, results_dir=tmp_path).play_series()
     cop_moves = cop_barriers = 0
     for log in tmp_path.glob("*/sub_game_*.jsonl"):
         for line in log.read_text(encoding="utf-8").splitlines():
@@ -87,4 +90,37 @@ def test_cop_uses_barriers_opportunistically_not_every_turn(config, tmp_path):
                 cop_barriers += 1
             else:
                 cop_moves += 1
-    assert cop_moves > cop_barriers  # mostly pursuit; barriers are the exception
+    assert cop_barriers > 0  # barriers are genuinely used at radius 2
+    assert cop_moves > cop_barriers  # but mostly pursuit; barriers are the exception
+
+
+def test_default_config_series_is_balanced_not_all_cop(config, tmp_path):
+    """The shipped LOCAL default (radius 1 + start_distance_max) must be a real,
+    roughly even contest over a seed sweep — not a Cop sweep. Guards against
+    regressing to a near-fully-observed board (radius 2) or pathological
+    far-corner starts that hand the game to one side."""
+    cop = thief = 0
+    for seed in range(1000, 1030):
+        cfg = _with(config, seed=seed, start_mode="random")
+        for r in Orchestrator(cfg, results_dir=tmp_path).play_series():
+            if r.winner is PlayerRole.COP:
+                cop += 1
+            else:
+                thief += 1
+    assert cop >= 1 and thief >= 1, f"one side never wins ({cop} cop / {thief} thief)"
+    rate = cop / (cop + thief)
+    assert 0.4 <= rate <= 0.6, f"cop win-rate {rate:.0%} outside the balanced 40-60% band"
+
+
+def test_r2_remains_cop_favoured(config, tmp_path):
+    """The agreed bonus radius (2, unbounded starts) stays Cop-favoured. The local
+    balance fix (radius 1 + start cap) must NOT silently alter the bonus-match
+    assumptions, and must not weaken the engine."""
+    r2 = _with(config, vision_radius=2, start_distance_max=None)
+    cop = thief = 0
+    for seed in range(1000, 1003):
+        cfg = _with(r2, seed=seed, start_mode="random")
+        for r in Orchestrator(cfg, results_dir=tmp_path).play_series():
+            cop += r.winner is PlayerRole.COP
+            thief += r.winner is PlayerRole.THIEF
+    assert cop / (cop + thief) >= 0.9, f"r2 unexpectedly not Cop-favoured ({cop}/{cop + thief})"

@@ -44,6 +44,25 @@ uv run python notebooks/parameter_sweep.py
 | 5x5 | 1 | 67% | 67% |
 | 7x7 | 1 | 52% | 52% |
 
+> The 67%→67% at r1 is **not** "barriers don't matter" — at radius 1 the Cop
+> places **zero** barriers (measured). The barrier trigger needs the Thief
+> *visible at distance 2*, which radius-1 vision can never supply. Barriers are
+> **inoperative** under r1 fog, **decisive** at r2.
+
+### Barrier-budget & decay sensitivity (5×5 r2, balance audit)
+
+Every knob on the fixed 5×5 is a **cliff** — there is no smooth strategy setting
+near 50%, which is why balance comes from the vision radius, not from tuning the
+barrier rule:
+
+| lever (5×5 r2) | cop win-rate |
+|---|---|
+| Cop barrier budget ≤1 / sub-game | 10% |
+| Cop barrier budget ≤2 | 97% |
+| temporary barriers, decay after 2 thief-moves | 33% |
+| temporary barriers, decay after 3+ thief-moves | 100% |
+| randomized Thief tie-breaks | 100% |
+
 ## 3. Interpretation — what actually balances the game
 
 This sweep answers a design question raised during review: *the Cop won nearly every game — was the
@@ -57,21 +76,26 @@ model, not the barriers**:
   board (radius **2 or 3** on these small grids), it tracks the Thief continuously and a competent
   Thief cannot survive 25 moves → **100% Cop**. When vision is genuinely limited (**radius 1**), the
   Thief breaks contact and exploits the fog → **52–67% Cop**, a balanced contest.
-- **Barriers are incidental, not the cause.** The ablation is decisive: at **5×5 r2** pursuit *alone*
-  catches the mobility-aware Thief **0%** of the time — equal-speed king-move pursuit cannot corner a
-  competent evader — so the Cop *must* use tactical barriers to herd it, and on a small fully-observed
-  board that herding always succeeds (0% → 100%). Under real fog (r1) barriers change **nothing**
-  (67%→67%, 52%→52%): pursuit decides the game and the wall is a rarely-decisive extra. So the Cop's
-  wins are a property of near-full visibility on a tiny board, **not** an over-eager barrier rule —
-  which is itself selective (capture-first, only an edge-pinned Thief at distance 2, budget-capped,
-  never self-trapping; see `PRD_agent_strategy`).
+- **Barriers are decisive at r2, inoperative at r1 — not "incidental".** The ablation is the clearest
+  signal: at **5×5 r2** pursuit *alone* catches the mobility-aware Thief **0%** of the time (equal-speed
+  king-move pursuit cannot corner a competent evader), so the Cop *must* herd with barriers, and on a
+  near-fully-observed board that herding always completes (0% → 100%). The barrier heuristic is
+  therefore the **decisive mechanism** at r2 — necessary *and* sufficient — not a sideshow. At **r1**
+  the table reads 67%→67% only because barriers **never fire** (the trigger needs a Thief visible at
+  distance 2, which r1 vision can't supply): they are **visibility-gated**, decisive where the Cop sees
+  two cells out, dormant under real fog. The heuristic itself is still selective (capture-first, only an
+  edge-pinned Thief at distance 2, budget-capped, never self-trapping; see `PRD_agent_strategy`).
 
-**Conclusion / spec note.** The graded series uses the **agreed** observation model — **5×5, vision
-radius 2** (`SHARED_MATCH_RULES` §2.9; radius 3 is the only sanctioned widening). At those parameters
-the game is structurally **Cop-favoured**, and that is expected pursuit-evasion behaviour on a small,
-near-fully-observed board, not a bug. Genuine 50/50 balance is a configuration choice (limit vision
-relative to the board: 5×5 r1, 7×7 r1, 9×9 r2) — available via `config.yaml` with **no code change**,
-but outside the agreed match rules, so it is documented here rather than shipped as the default.
+**Conclusion / what we ship.** The contest is governed by **vision relative to board size**, and on
+the **fixed** 5×5 the only lever that yields a balanced game is the (team-chosen, *not* rule-fixed)
+**vision radius** (plus the start spread) — every *strategy/barrier* knob is bimodal (budget 1→2 flips
+10%→97%; decay 2→3 flips 33%→100%; randomising the Thief stays 100%; see the sensitivity table above).
+We therefore **ship the local series at radius 1 with a start-distance cap (`start_distance_max: 3`)**:
+removing pathological far-corner starts on the 5×5 brings the contest to **~49% Cop over seeds
+1000–1029** (88 Cop / 92 Thief) — an even game, not a sweep. The **bonus inter-group match** keeps the
+agreed **radius 2** with **unbounded** starts (`SHARED_MATCH_RULES` §2.9, via `match.vision_radius`),
+where the game is structurally **Cop-favoured** — expected pursuit-evasion on a near-fully-observed
+board, and *symmetric* across the role split, so the bonus stays fair even though it is Cop-dominated.
 
 ## 4. Threats to validity
 

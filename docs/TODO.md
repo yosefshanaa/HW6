@@ -15,13 +15,16 @@
 
 ## Status Snapshot (2026-06-22)
 
-**Done & verified locally** (104 tests, 97% coverage, ruff clean, pushed to `origin/main`):
+**Done & verified locally** (114 tests, 98% coverage, ruff clean):
 - Phases 1–10, 13–14: scaffold, config/version/secrets, engine, partial observation, baseline
   agents, MCP servers/tools/client, orchestrator + Technical-Loss, logging/replay, internal+bonus
   report JSON, **mocked** Gmail reporter, SDK + CLI, GUI text renderer + replay, CI workflow,
   prompt book.
 - `uv run cop-thief` plays a full clean 6-sub-game series autonomously and emits a **JSON-only**
   report to stdout (logs go to stderr).
+- **Phase 12 local dry-run (2026-06-22):** `uv run cop-thief-match` runs the inter-group bonus
+  series between two `TeamSystem` peers on the loopback MCP transport (authoritative + mirror engines,
+  role swap, §9.2 report). De-risks the real match; only the partner endpoints remain external.
 - **Strategy audit (2026-06-22):** local series is fixed **Cop-vs-Thief** for all 6 sub-games
   (role-swap only in the bonus); confirmed, no model change. Replaced the corner-fleeing Thief with a
   **mobility-aware** evader and tightened the Cop barrier guard — the real imbalance was the Thief,
@@ -266,17 +269,28 @@ live or replayed series; calls only the SDK.
 
 **Deps:** Phases 7, 15. **Owner:** `@owner-TODO`. **PRD:** [`PRD_bonus_match.md`](PRD_bonus_match.md).
 
-- [ ] **P1** Agree the shared spec choices with the partner (coordinates, referee, seed, timeout) —
-  `SHARED_MATCH_RULES.md`.
+- [~] **P1** Agree the shared spec choices with the partner (coordinates, referee, seed, timeout) —
+  fill-in `SHARED_MATCH_RULES.md` delivered; **final ticks need the partner**.
 - [ ] **P1** Connect to partner MCP URLs with tokens; rate-limit handshake (~30 req/min/direction).
-- [ ] **P1** Role split: sub-games 1–3 (A Cop vs B Thief), 4–6 (B Cop vs A Thief).
-- [ ] **P1** Mirror-and-flag mismatch detection (non-referee side).
-- [ ] **P1** Build the bonus report (§9.2); both teams compare and send **identical** JSON with
-  `mutual_agreement: true`.
-- [ ] **P1** Swap timestamped logs after the match for joint debugging.
+  *(External — needs the partner's 4 URLs + tokens.)*
+- [x] **P1** Role split: sub-games 1–3 (A Cop vs B Thief), 4–6 (B Cop vs A Thief). *(Implemented in
+  `match/match_orchestrator.py` `LocalMatch.roles`; swaps at the halfway sub-game.)*
+- [x] **P1** Mirror-and-flag mismatch detection (non-referee side). *(`match/reconcile.py`
+  `diff_state`; the thief side runs a mirror engine and flags any per-turn divergence.)*
+- [x] **P1** Build the bonus report (§9.2) with `mutual_agreement: true`. *(`SDK.build_bonus_report`;
+  validated against `BONUS_SCHEMA`. Both teams **comparing and sending identical** JSON is external.)*
+- [~] **P1** Swap timestamped logs after the match for joint debugging. *(We write per-turn
+  timestamped JSONL incl. reconcile flags; the swap itself needs a partner.)*
+
+**Local interop dry-run (2026-06-22):** `uv run cop-thief-match` plays the full 6-sub-game bonus
+series between two `TeamSystem` peers over the loopback MCP transport (cop-side authoritative referee
++ thief-side mirror, envelope via `submit_turn`, role swap, Technical-Loss rerun) and emits the §9.2
+report. De-risks Phase 12 with **no external endpoints**; the real match swaps the loopback transport
+for the partner's MCP URLs + tokens. Covered by `tests/integration/test_local_match.py` +
+`tests/unit/test_reconcile.py`.
 
 **DoD:** A cross-team series of 6 clean sub-games runs over HTTPS+token; both teams' JSON match
-field-for-field with `mutual_agreement: true`.
+field-for-field with `mutual_agreement: true`. *(Local dry-run done; HTTPS+partner is external.)*
 
 ---
 

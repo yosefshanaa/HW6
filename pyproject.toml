@@ -23,6 +23,7 @@ gmail = [
 
 [project.scripts]
 cop-thief = "cop_thief.main:main"
+cop-thief-match = "cop_thief.match.cli:main"
 cop-thief-gui = "cop_thief.gui.app:main"
 cop-thief-web-gui = "cop_thief.gui.web_app:main"
 cop-thief-cop-server = "cop_thief.mcp.cop_server:main"

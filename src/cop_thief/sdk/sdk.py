@@ -12,8 +12,13 @@ from typing import Any
 
 from cop_thief.constants import ReportType
 from cop_thief.domain.records import SubGameResult
+from cop_thief.match.match_orchestrator import LocalMatch, MatchOutcome
+from cop_thief.match.team_system import TeamSystem
 from cop_thief.orchestrator.orchestrator import Orchestrator
 from cop_thief.reporting.gmail_reporter import GmailReporter
+from cop_thief.reporting.report_builder import (
+    build_bonus_report as build_bonus_report_dict,
+)
 from cop_thief.reporting.report_builder import build_internal_report, validate_report
 from cop_thief.shared.config import Config, load_config
 from cop_thief.shared.gatekeeper import ApiGatekeeper
@@ -47,6 +52,40 @@ class CopThiefSDK:
         report = build_internal_report(self._config, results)
         validate_report(report, ReportType.INTERNAL)
         return report
+
+    def run_local_match(
+        self, results_dir: str | Path | None = None
+    ) -> tuple[MatchOutcome, Path]:
+        """Play the bonus series between two local peers (Phase 12 dry-run)."""
+        team_a = TeamSystem(self._config.get("match.group_1", "Team-A"), self._config)
+        team_b = TeamSystem(self._config.get("match.group_2", "Team-B"), self._config)
+        match = LocalMatch(self._config, team_a, team_b, results_dir=results_dir)
+        return match.play_series(), match.series_dir
+
+    def build_bonus_report(self, outcome: MatchOutcome) -> dict[str, Any]:
+        """Build + validate the §9.2 inter-group report from a match outcome."""
+        report = build_bonus_report_dict(
+            self._bonus_meta(), outcome.results, outcome.totals_by_group
+        )
+        validate_report(report, ReportType.BONUS)
+        return report
+
+    def _bonus_meta(self) -> dict[str, Any]:
+        """Assemble the §9.2 report metadata from config (group/url/student fields)."""
+        c = self._config
+        return {
+            "group_1": c.get("match.group_1", "Team-A"),
+            "group_2": c.get("match.group_2", "Team-B"),
+            "github_repo_group_1": c.get("match.github_repo_group_1", c.get("report.github_repo")),
+            "github_repo_group_2": c.get("match.github_repo_group_2", ""),
+            "mcp_url_group_1_cop": c.get("match.mcp_url_group_1_cop", ""),
+            "mcp_url_group_1_thief": c.get("match.mcp_url_group_1_thief", ""),
+            "mcp_url_group_2_cop": c.get("match.mcp_url_group_2_cop", ""),
+            "mcp_url_group_2_thief": c.get("match.mcp_url_group_2_thief", ""),
+            "timezone": c.get("report.timezone", "Asia/Jerusalem"),
+            "students_group_1": c.get("match.students_group_1", []),
+            "students_group_2": c.get("match.students_group_2", []),
+        }
 
     def gmail_reporter(self) -> GmailReporter:
         """Build a Gmail reporter from config (recipient, files, least-priv scope)."""

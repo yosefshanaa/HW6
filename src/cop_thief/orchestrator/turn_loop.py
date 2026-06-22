@@ -30,7 +30,7 @@ def play_turn(
     message = strategy.compose_message(obs, action, memory)
     valid, reason = referee.validate(role, action)
     if not valid:
-        action, reason = _safe_fallback(referee, role, action, reason)
+        action, reason = safe_fallback(referee, role, action, reason)
 
     result = referee.apply(role, action)
     peer_memory.setdefault("received_messages", []).append(message)
@@ -51,7 +51,7 @@ def play_turn(
     return result
 
 
-def _safe_fallback(
+def safe_fallback(
     referee: Referee, role: PlayerRole, action: Action, reason: str
 ) -> tuple[Action, str]:
     """Replace an illegal action with a guaranteed-legal move when possible."""
