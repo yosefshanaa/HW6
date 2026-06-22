@@ -22,6 +22,9 @@ scoring:
 # --- Start positions ---
 start_mode: random        # "random" (seeded) or "fixed"
 seed: 1234                # shared seed for reproducible starts
+start_distance_max: 3     # cap Chebyshev start separation (local balance: avoids
+                          # distance-4 far-corner starts on 5x5). Omit/null = unbounded.
+                          # The bonus match samples unbounded at its agreed radius.
 fixed_start:              # used only when start_mode == "fixed"
   cop: [0, 0]
   thief: [4, 4]

@@ -95,29 +95,28 @@ def test_cop_uses_barriers_opportunistically_not_every_turn(config, tmp_path):
 
 
 def test_default_config_series_is_balanced_not_all_cop(config, tmp_path):
-    """The shipped LOCAL default must be a genuine contest, not trivially all-Cop.
-    Over a fixed seed sweep the Thief escapes some sub-games and the Cop wins
-    others. Guards against regressing the default back to a near-fully-observed
-    board (radius 2) where the Cop herds to ~100%."""
+    """The shipped LOCAL default (radius 1 + start_distance_max) must be a real,
+    roughly even contest over a seed sweep — not a Cop sweep. Guards against
+    regressing to a near-fully-observed board (radius 2) or pathological
+    far-corner starts that hand the game to one side."""
     cop = thief = 0
-    for seed in range(1000, 1005):
+    for seed in range(1000, 1030):
         cfg = _with(config, seed=seed, start_mode="random")
         for r in Orchestrator(cfg, results_dir=tmp_path).play_series():
             if r.winner is PlayerRole.COP:
                 cop += 1
             else:
                 thief += 1
-    assert thief >= 1, f"default is trivially all-Cop ({cop} cop / {thief} thief)"
-    assert cop >= 1, f"default is trivially all-Thief ({cop} cop / {thief} thief)"
+    assert cop >= 1 and thief >= 1, f"one side never wins ({cop} cop / {thief} thief)"
     rate = cop / (cop + thief)
-    assert 0.2 <= rate <= 0.9, f"cop win-rate {rate:.0%} outside the balanced band"
+    assert 0.4 <= rate <= 0.6, f"cop win-rate {rate:.0%} outside the balanced 40-60% band"
 
 
 def test_r2_remains_cop_favoured(config, tmp_path):
-    """At the agreed bonus radius (2) the Cop herds to a near-certain win. This is
-    expected pursuit-evasion on a near-fully-observed 5x5 and must NOT be 'balanced
-    away' — the local default lowers vision instead of weakening the engine."""
-    r2 = _with(config, vision_radius=2)
+    """The agreed bonus radius (2, unbounded starts) stays Cop-favoured. The local
+    balance fix (radius 1 + start cap) must NOT silently alter the bonus-match
+    assumptions, and must not weaken the engine."""
+    r2 = _with(config, vision_radius=2, start_distance_max=None)
     cop = thief = 0
     for seed in range(1000, 1003):
         cfg = _with(r2, seed=seed, start_mode="random")

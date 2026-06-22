@@ -88,10 +88,12 @@ model, not the barriers**:
 
 **Conclusion / what we ship.** The contest is governed by **vision relative to board size**, and on
 the **fixed** 5×5 the only lever that yields a balanced game is the (team-chosen, *not* rule-fixed)
-**vision radius** — every strategy/budget knob is bimodal (budget 1→2 flips 10%→97%; decay 2→3 flips
-33%→100%; randomising the Thief stays 100%; see the sensitivity table above). We therefore **ship the
-local series at radius 1** (~67% Cop, with genuine Thief escapes) as the default. The **bonus
-inter-group match** keeps the agreed **radius 2** (`SHARED_MATCH_RULES` §2.9, via `match.vision_radius`),
+**vision radius** (plus the start spread) — every *strategy/barrier* knob is bimodal (budget 1→2 flips
+10%→97%; decay 2→3 flips 33%→100%; randomising the Thief stays 100%; see the sensitivity table above).
+We therefore **ship the local series at radius 1 with a start-distance cap (`start_distance_max: 3`)**:
+removing pathological far-corner starts on the 5×5 brings the contest to **~49% Cop over seeds
+1000–1029** (88 Cop / 92 Thief) — an even game, not a sweep. The **bonus inter-group match** keeps the
+agreed **radius 2** with **unbounded** starts (`SHARED_MATCH_RULES` §2.9, via `match.vision_radius`),
 where the game is structurally **Cop-favoured** — expected pursuit-evasion on a near-fully-observed
 board, and *symmetric* across the role split, so the bonus stays fair even though it is Cop-dominated.
 

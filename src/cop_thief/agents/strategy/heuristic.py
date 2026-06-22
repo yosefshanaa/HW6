@@ -69,8 +69,9 @@ class HeuristicCop(Strategy):
         At radius 2 that is the common case and herding is **decisive** (barrier
         ablation: 0%→100% Cop). At the radius-1 local default the Cop can never see
         a distance-2 Thief, so it places no barriers and plays pure pursuit — a
-        balanced ~67% Cop. Barriers are thus a visibility-gated tool, not an
-        always-on win button (see docs/EXPERIMENTS.md).
+        roughly even contest (~49% Cop with the capped start spread). Barriers are
+        thus a visibility-gated tool, not an always-on win button (see
+        docs/EXPERIMENTS.md).
         """
         if thief is None:
             return False
@@ -104,8 +105,8 @@ class HeuristicThief(Strategy):
     barriers, the greatest raw distance, and finally the most central spot — a sound,
     deterministic evasion. At radius 2 (the agreed bonus-match value) the Cop can
     track and barrier-herd it to a near-certain capture; at the radius-1 local
-    default the fog lets it break contact and escape ~1/3 of sub-games (see
-    docs/EXPERIMENTS.md).
+    default (with a capped start distance) the fog lets it break contact and win
+    about half the sub-games (see docs/EXPERIMENTS.md).
     """
 
     def __init__(self) -> None:

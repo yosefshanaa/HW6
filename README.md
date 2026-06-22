@@ -153,9 +153,10 @@ sacrificing an available capture or self-trapping. The heuristic **Thief** is **
 stays uncapturable (≥2 cells from the Cop), then keeps to open space and clearance from walls instead
 of fleeing into a corner (see [`docs/PRD_agent_strategy.md`](docs/PRD_agent_strategy.md)).
 
-**Balance is set by the vision radius (a team-chosen parameter, not the fixed 5×5 rule).** The **local
-series defaults to radius 1**, which keeps a genuine contest — **~67% Cop, the Thief escapes ~1/3 of
-sub-games**. At radius 1 the Cop can't see a distance-2 Thief, so it plays pure pursuit and barriers
+**Balance is set by the vision radius (a team-chosen parameter, not the fixed 5×5 rule) plus the start
+spread.** The **local series defaults to radius 1 with a start-distance cap (`start_distance_max: 3`)**,
+which removes pathological far-corner starts and gives a **roughly even contest (~49% Cop over seeds
+1000–1029)**. At radius 1 the Cop can't see a distance-2 Thief, so it plays pure pursuit and barriers
 stay dormant. Raise vision to **radius 2** — the value the **bonus inter-group match** uses
 (`match.vision_radius`) — and the 5×5 board is near-fully observed: the Cop barrier-herds a competent
 evader to a near-certain capture, and the [barrier ablation](docs/EXPERIMENTS.md#barrier-ablation-cop-win-rate-with-vs-without-barriers)

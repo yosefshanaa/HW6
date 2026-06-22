@@ -42,7 +42,12 @@ class Orchestrator:
     def _start_positions(self):
         if self.config.get("start_mode") == "fixed":
             return fixed_start(self.config.get("fixed_start"))
-        return random_start(self.referee.grid_size, self.referee.vision_radius, self.rng)
+        return random_start(
+            self.referee.grid_size,
+            self.referee.vision_radius,
+            self.rng,
+            max_distance=self.config.get("start_distance_max"),
+        )
 
     def play_sub_game(self, index: int, attempt: int = 1) -> SubGameResult:
         """Play one sub-game; raise TechnicalLossError if a glitch is injected."""

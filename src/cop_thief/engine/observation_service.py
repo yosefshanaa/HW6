@@ -40,17 +40,29 @@ def all_cells(grid_size: Sequence[int]) -> list[Position]:
 
 
 def random_start(
-    grid_size: Sequence[int], vision_radius: int, rng: random.Random
+    grid_size: Sequence[int],
+    vision_radius: int,
+    rng: random.Random,
+    max_distance: int | None = None,
 ) -> tuple[Position, Position]:
     """Pick a Cop/Thief pair that is distinct and outside each other's radius.
 
     Chosen jointly (not Cop-then-Thief) so a centre cell with no out-of-radius
-    partner can never dead-end the placement.
+    partner can never dead-end the placement. ``max_distance`` optionally caps
+    the Chebyshev start separation (local balance: avoids pathological
+    far-corner starts on a small board); when omitted, behaviour is unchanged.
     """
     cells = all_cells(grid_size)
-    pairs = [(a, b) for a in cells for b in cells if a.chebyshev(b) > vision_radius]
+    pairs = [
+        (a, b)
+        for a in cells
+        for b in cells
+        if vision_radius < a.chebyshev(b) and (max_distance is None or a.chebyshev(b) <= max_distance)
+    ]
     if not pairs:
-        raise ValueError("grid too small for vision_radius start constraint")
+        raise ValueError(
+            f"no valid start pair for vision_radius={vision_radius}, max_distance={max_distance}"
+        )
     return rng.choice(pairs)
 
 
