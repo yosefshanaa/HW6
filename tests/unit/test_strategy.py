@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cop_thief.agents.strategy.heuristic import make_strategy
+from cop_thief.agents.strategy.heuristic import _message_hint, make_strategy
 from cop_thief.agents.strategy.q_table import QTable
 from cop_thief.constants import ActionType
 from cop_thief.domain.observation import Observation
@@ -98,6 +98,31 @@ def test_thief_blind_drifts_to_open_centre():
     o = obs(PlayerRole.THIEF, Position(0, 0))
     action = make_strategy(PlayerRole.THIEF).decide(o, {})
     assert action.to == Position(1, 1)                       # most central legal cell
+
+
+def test_message_hint_parses_coordinate():
+    assert _message_hint({"received_messages": ["Cop closing in toward [3, 1]."]}) == Position(3, 1)
+    assert _message_hint({"received_messages": ["no coordinate here"]}) is None
+    assert _message_hint({}) is None
+
+
+def test_thief_uses_message_hint_to_evade_when_blind():
+    # No sighting and no remembered position, but the Cop's last message places it
+    # bottom-right: the Thief should evade away from that coarse belief. (Blind
+    # without the hint it would drift to (3,3) — toward (4,4) — so moving away
+    # proves the hint was used.)
+    o = obs(PlayerRole.THIEF, Position(2, 2))
+    memory = {"received_messages": ["Cop closing in toward [4, 4]."]}
+    action = make_strategy(PlayerRole.THIEF).decide(o, memory)
+    assert action.to.chebyshev(Position(4, 4)) > Position(2, 2).chebyshev(Position(4, 4))
+
+
+def test_thief_sighting_overrides_bluffing_message():
+    # A visible opponent takes priority over a (possibly bluffing) message hint.
+    o = obs(PlayerRole.THIEF, Position(2, 2), opponent=Position(2, 1))
+    memory = {"received_messages": ["Cop closing in toward [4, 4]."]}
+    action = make_strategy(PlayerRole.THIEF).decide(o, memory)
+    assert action.to.chebyshev(Position(2, 1)) > Position(2, 2).chebyshev(Position(2, 1))
 
 
 def test_decision_is_always_legal():

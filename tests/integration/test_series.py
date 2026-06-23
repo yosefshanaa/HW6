@@ -94,6 +94,22 @@ def test_cop_uses_barriers_opportunistically_not_every_turn(config, tmp_path):
     assert cop_moves > cop_barriers  # but mostly pursuit; barriers are the exception
 
 
+def test_run_series_seed_override_varies_and_reproduces(config, tmp_path):
+    """A seed override reproduces for the same seed and differs across seeds — so
+    the live GUI's Play Again (random seed) yields fresh games while the headless
+    default (config seed) stays reproducible."""
+    from cop_thief.sdk.sdk import CopThiefSDK
+
+    sdk = CopThiefSDK(config)
+
+    def outcome(seed):
+        results, _ = sdk.run_series(results_dir=tmp_path, seed=seed)
+        return tuple(r.winner for r in results)
+
+    assert outcome(7) == outcome(7)                       # same seed -> same game
+    assert len({outcome(s) for s in range(20, 45)}) > 1   # different seeds -> different games
+
+
 def test_barrier_turns_are_single_action_in_logs(config, tmp_path):
     """Authoritative JSONL proof: every Cop barrier turn places a barrier on the
     Cop's own cell and does NOT also move the Cop (one committed action/turn).

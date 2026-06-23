@@ -1,15 +1,19 @@
 """Local browser GUI entry point — ``uv run cop-thief-web-gui``.
 
-Renders a fresh local series (or a replay JSONL file / series directory) as a
-self-contained HTML page and opens it in the default browser. Local-only: no
-network, Gmail, cloud, LLM, or partner URLs.
+By default starts a tiny **loopback-only** HTTP server (Python stdlib, no extra
+dependency): it serves the GUI and a ``Play Again`` button that runs a brand-new
+local series. ``--output`` instead writes a self-contained static HTML file (for
+screenshots / replay evidence) and exits. Local-only: no network exposure,
+Gmail, cloud, LLM, or partner URLs.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import random
 import webbrowser
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from cop_thief.gui.render import build_html, group_rounds, turn_view
@@ -27,8 +31,12 @@ def _sub_view(index, winner, cop_score, thief_score, moves, records, grid) -> di
 
 
 def run_live(sdk: CopThiefSDK, grid: list[int]) -> dict:
-    """Play a fresh local series and build the view-model with scores."""
-    results, series_dir = sdk.run_series()
+    """Play a fresh local series and build the view-model with scores.
+
+    Uses a **random seed** each call so the live GUI's *Play Again* yields a
+    genuinely different game (the headless pipeline keeps the reproducible seed).
+    """
+    results, series_dir = sdk.run_series(seed=random.randrange(2**31))
     report = sdk.build_report(results)
     subs = []
     for r in results:
@@ -70,27 +78,83 @@ def _replay_file(p: Path, grid: list[int], sdk: CopThiefSDK) -> dict:
     return {"grid_size": grid, "totals": {"cop": cop, "thief": thief}, "sub_games": [sub]}
 
 
+class GuiServer(ThreadingHTTPServer):
+    """Loopback-only GUI server: holds the current view-model + a series factory."""
+
+    daemon_threads = True
+
+    def __init__(self, address, view: dict, new_series) -> None:
+        super().__init__(address, _GuiHandler)
+        self.view = view
+        self.new_series = new_series  # callable() -> fresh view-model dict
+
+
+class _GuiHandler(BaseHTTPRequestHandler):
+    """GET / serves the page; POST /api/new-series runs a fresh series."""
+
+    def log_message(self, *_args) -> None:  # keep stdout clean
+        pass
+
+    def do_GET(self) -> None:
+        if self.path != "/":
+            self.send_error(404)
+            return
+        self._send(200, "text/html; charset=utf-8", build_html(self.server.view, live=True))
+
+    def do_POST(self) -> None:
+        if self.path != "/api/new-series":
+            self.send_error(404)
+            return
+        self.server.view = self.server.new_series()
+        self._send(200, "application/json", json.dumps(self.server.view))
+
+    def _send(self, code: int, ctype: str, text: str) -> None:
+        body = text.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+def _open(uri: str, no_open: bool) -> None:
+    if not no_open and webbrowser.open(uri):
+        print("Opened in your browser.")
+    else:
+        print(f"Open this in a browser: {uri}")
+
+
 def main() -> None:
-    """Build the HTML page and open it in a browser (or just write it)."""
+    """Start the live GUI server, or write a static HTML file with ``--output``."""
     parser = argparse.ArgumentParser(description="Cop & Thief — local browser GUI.")
     parser.add_argument("--replay", default=None, help="JSONL file or a series directory")
-    parser.add_argument("--output", default=None, help="HTML output path")
-    parser.add_argument("--no-open", action="store_true", help="write HTML without opening a browser")
+    parser.add_argument("--output", default=None, help="write a static HTML file and exit")
+    parser.add_argument("--no-open", action="store_true", help="do not open a browser")
+    parser.add_argument("--port", type=int, default=0, help="live server port (0 = auto-select)")
     args = parser.parse_args()
 
     sdk = CopThiefSDK()
     grid = sdk.config.get("grid_size")
     view = load_replay(args.replay, grid, sdk) if args.replay else run_live(sdk, grid)
 
-    default = Path(sdk.config.get("logging.results_dir", "results")) / "web_gui.html"
-    out = Path(args.output or default)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build_html(view), encoding="utf-8")
-    print(f"Web GUI written to {out}")
-    if not args.no_open and webbrowser.open(out.resolve().as_uri()):
-        print("Opened in your browser.")
-    else:
-        print(f"Open this file in a browser: {out.resolve()}")
+    if args.output:  # static export — self-contained file, Play Again hidden
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(build_html(view), encoding="utf-8")
+        print(f"Static GUI written to {out}")
+        _open(out.resolve().as_uri(), args.no_open)
+        return
+
+    server = GuiServer(("127.0.0.1", args.port), view, lambda: run_live(sdk, grid))
+    url = f"http://127.0.0.1:{server.server_address[1]}/"
+    print(f"Live GUI at {url}  —  Play Again runs a new series; Ctrl+C to stop.")
+    _open(url, args.no_open)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nstopped.")
+    finally:
+        server.server_close()
 
 
 if __name__ == "__main__":

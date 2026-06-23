@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from cop_thief.agents.strategy.base import Strategy, grid_center, legal_neighbor_cells
 from cop_thief.constants import ActionType
 from cop_thief.domain.action import Action
@@ -35,6 +37,22 @@ def _nearest_barrier_dist(cell: Position, obs: Observation) -> int:
     if not obs.visible_barriers:
         return obs.grid_size[0] + obs.grid_size[1]
     return min(cell.chebyshev(b) for b in obs.visible_barriers)
+
+
+_COORD_RE = re.compile(r"\[(\d+),\s*(\d+)\]")
+
+
+def _message_hint(memory: dict) -> Position | None:
+    """A coarse, *untrusted* belief of the opponent's cell, parsed from its last
+    natural-language message. The Thief uses it only as a last resort under fog
+    (no sighting, no remembered position); a real observation always overrides it,
+    so a bluff can mislead at most when the Thief is otherwise totally blind.
+    """
+    msgs = memory.get("received_messages")
+    if not msgs:
+        return None
+    m = _COORD_RE.search(msgs[-1])
+    return Position(int(m.group(1)), int(m.group(2))) if m else None
 
 
 def _track(obs: Observation, memory: dict) -> Position | None:
@@ -80,7 +98,7 @@ class HeuristicCop(Strategy):
         At radius 2 that is the common case and herding is **decisive** (barrier
         ablation: 0%→100% Cop). At the radius-1 local default the Cop can never see
         a distance-2 Thief, so it places no barriers and plays pure pursuit/search —
-        a genuine contest (~56% Cop with distance-3 starts). Barriers are thus a
+        a genuine contest (~54% Cop with distance-3 starts). Barriers are thus a
         visibility-gated tool, not an always-on win button (see docs/EXPERIMENTS.md).
         """
         if thief is None:
@@ -125,11 +143,13 @@ class HeuristicThief(Strategy):
     Thief first keeps a safe gap (≥2 from the Cop, so it cannot be captured next turn),
     then prefers cells with the most escape routes, the greatest clearance from
     barriers, the greatest raw distance, and finally the most central spot — a sound,
-    deterministic evasion. When it has *not* sighted the Cop it stays mobile and
-    avoids backtracking (rather than marching into the centre, which used to walk it
+    deterministic evasion. Under fog it evades from its remembered last position, or
+    failing that from a coarse, *untrusted* belief parsed from the Cop's last message
+    (a live sighting always overrides it); with no information at all it stays mobile
+    and avoids backtracking rather than marching into the centre (which used to walk it
     into the Cop). At radius 2 the Cop can track and barrier-herd it to a near-certain
     capture; at the radius-1 local default the fog lets it break contact and win
-    about 40% of sub-games (see docs/EXPERIMENTS.md).
+    ~46% of sub-games (see docs/EXPERIMENTS.md).
     """
 
     def __init__(self) -> None:
@@ -137,11 +157,14 @@ class HeuristicThief(Strategy):
 
     def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
         prev = _track(obs, memory)
-        ref = _reference(obs, memory)
+        # Belief priority: live sighting > remembered last position > a coarse,
+        # untrusted hint parsed from the Cop's last message (fog fallback only).
+        ref = _reference(obs, memory) or _message_hint(memory)
         center = grid_center(obs.grid_size)
         if ref is None:
-            # Blind: keep escape routes open and don't backtrack; no march to the
-            # dead centre (that walked the Thief straight into a central Cop).
+            # Truly blind (no sighting, memory, or message): keep escape routes
+            # open and don't backtrack; no march to the dead centre (that walked
+            # the Thief straight into a central Cop).
             return max(cells, key=lambda c: (c != prev, _mobility(c, obs), c.row, c.col))
         # Seeing / last-known: original mobility-aware evasion (unchanged so the
         # documented radius-2 behaviour is preserved).

@@ -85,7 +85,16 @@ def group_rounds(turn_views: list[dict]) -> list[dict]:
     return rounds
 
 
-def build_html(view_model: dict) -> str:
-    """Embed the view-model JSON into the self-contained HTML template."""
+def build_html(view_model: dict, live: bool = False) -> str:
+    """Embed the view-model JSON into the self-contained HTML template.
+
+    ``live`` enables the **Play Again** button (it POSTs to the local GUI
+    server). A static export (``--output``) leaves it ``False`` so the page is a
+    plain self-contained file with the button hidden.
+    """
     template = _TEMPLATE.read_text(encoding="utf-8")
-    return template.replace("__VIEW_MODEL__", json.dumps(view_model))
+    return (
+        template
+        .replace("__VIEW_MODEL__", json.dumps(view_model))
+        .replace("__LIVE_ENABLED__", "true" if live else "false")
+    )
