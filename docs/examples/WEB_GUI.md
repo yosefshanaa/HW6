@@ -47,22 +47,23 @@ uv run cop-thief-web-gui --replay results/<ts>/ \
 
 ## Screenshots
 
-Real headless-Chrome captures of the live page, committed under [`../../assets/`](../../assets/):
+Real captures of the **live** GUI in a browser (committed under [`../../assets/`](../../assets/)). The
+**▻ Play Again** button (top-left) runs a brand-new, randomly seeded 6-sub-game series:
 
-| Local default — 5×5, radius 1 (balanced) | Bonus setting — radius 2 (Cop-favored) |
-|---|---|
-| ![GUI — radius 1, start](../../assets/screenshot_gui_live.png) | ![radius 2, start](../../assets/screenshot_gui_radius2.png) |
-| ![radius 1, mid-game pursuit](../../assets/screenshot_gui_live_mid.png) | ![radius 2, mid-game](../../assets/screenshot_gui_radius2_mid.png) |
+![Live GUI — sub-game selector open over the Truth Board / Fog View / Intel panels](../../assets/gui_replay.png)
 
-Top row = start positions; bottom row = several steps in (a real multi-turn pursuit, the comms feed
-filling, scores updating). Each shows the **Truth Board**, the acting agent's **fog view** (`?` =
-beyond vision), the **comms feed** (messages may bluff), and **scores/totals**.
+| Play Again → new series | Sub-game selector (winners) | Comms feed (may bluff) | Cop captures the Thief |
+|---|---|---|---|
+| ![Play Again generating a fresh series](../../assets/gui_play_again.png) | ![sub-game selector with winners](../../assets/gui_controls.png) | ![comms feed of messages + actions](../../assets/gui_comms.png) | ![Cop lands on the Thief](../../assets/gui_capture.png) |
 
-Regenerate and re-capture (no browser UI needed):
+Each frame shows the **Truth Board**, the acting agent's **fog view** (`?` = beyond vision), the
+**comms feed** (messages may bluff), and **scores/totals**.
+
+For a headless PNG (CI/report, no browser UI), export a static page and screenshot it:
 
 ```bash
 uv run cop-thief-web-gui --no-open --output results/web_gui.html
 google-chrome --headless=new --no-sandbox --hide-scrollbars \
     --virtual-time-budget=2500 --window-size=1400,1700 \
-    --screenshot=assets/screenshot_gui_live.png "file://$PWD/results/web_gui.html"
+    --screenshot=assets/gui_live.png "file://$PWD/results/web_gui.html"
 ```

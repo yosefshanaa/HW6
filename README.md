@@ -125,7 +125,13 @@ It shows, side by side:
 - **Steps & scores** — a **STEP** is one round (*Thief action + Cop action*; **max 25** per sub-game,
   not 50), with Prev/Run/Next controls, a sub-game selector, and per-sub-game scores.
 
-A curated sample page + screenshot notes: [`docs/examples/WEB_GUI.md`](docs/examples/WEB_GUI.md).
+![Live browser GUI — Truth Board, Agent Fog View, comms feed, scores, and the ↻ Play Again button](assets/gui_live.png)
+
+| ↻ Play Again runs a fresh series | Pick any sub-game (winner shown) | Cop lands on the Thief |
+|---|---|---|
+| ![Play Again generating a new series](assets/gui_play_again.png) | ![sub-game selector with winners](assets/gui_controls.png) | ![Cop captures the Thief](assets/gui_capture.png) |
+
+More captures + a headless-export recipe: [`docs/examples/WEB_GUI.md`](docs/examples/WEB_GUI.md).
 
 ### MCP servers (localhost)
 
