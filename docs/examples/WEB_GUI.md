@@ -45,7 +45,24 @@ uv run cop-thief-web-gui --replay results/<ts>/ \
 - **⏮ Prev / ▶ Run / Next ⏭** step by round; **speed** 0.5×/1×/2×.
 - **Winner / per-sub-game scores**, **series totals**, and a **comms feed** (messages may bluff).
 
-## Screenshot
+## Screenshots
 
-To capture a PNG for the report: open `sample_web_gui.html` (or a live run) in a browser and use the
-OS screenshot tool; save it under `assets/`. (No image is committed here to keep the repo light.)
+Real headless-Chrome captures of the live page, committed under [`../../assets/`](../../assets/):
+
+| Local default — 5×5, radius 1 (balanced) | Bonus setting — radius 2 (Cop-favored) |
+|---|---|
+| ![GUI — radius 1, start](../../assets/screenshot_gui_live.png) | ![radius 2, start](../../assets/screenshot_gui_radius2.png) |
+| ![radius 1, mid-game pursuit](../../assets/screenshot_gui_live_mid.png) | ![radius 2, mid-game](../../assets/screenshot_gui_radius2_mid.png) |
+
+Top row = start positions; bottom row = several steps in (a real multi-turn pursuit, the comms feed
+filling, scores updating). Each shows the **Truth Board**, the acting agent's **fog view** (`?` =
+beyond vision), the **comms feed** (messages may bluff), and **scores/totals**.
+
+Regenerate and re-capture (no browser UI needed):
+
+```bash
+uv run cop-thief-web-gui --no-open --output results/web_gui.html
+google-chrome --headless=new --no-sandbox --hide-scrollbars \
+    --virtual-time-budget=2500 --window-size=1400,1700 \
+    --screenshot=assets/screenshot_gui_live.png "file://$PWD/results/web_gui.html"
+```

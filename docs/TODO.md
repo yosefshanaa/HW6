@@ -258,7 +258,8 @@ smoke test delivers a real report; secrets are git-ignored.
   acting agent's `?`-masked view alongside the true board); unit-tested.
 - [x] **P1** Message log + per-sub-game score lines + turn-by-turn event log (replay mode).
 - [x] **P1** Replay mode (load a series JSONL via `cop-thief-gui --replay`).
-- [ ] **P2** Capture screenshots into `assets/`/`results/` for the report.
+- [x] **P2** Capture screenshots into `assets/` for the report (4 headless-Chrome PNGs of the live
+  GUI at radius 1/2, start + mid-game; embedded in [`examples/WEB_GUI.md`](examples/WEB_GUI.md)).
 
 **DoD:** The GUI shows board, agents, barriers, turns, observations, messages, scores, and logs for a
 live or replayed series; calls only the SDK.
