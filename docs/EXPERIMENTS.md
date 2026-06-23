@@ -94,7 +94,8 @@ We therefore **ship the local series at radius 1 with fixed distance-3 starts (`
 `start_distance_max: 3`)** and **competent, non-looping agents**: the blind Cop now patrols/searches
 instead of oscillating near the centre (the old loop bug that *looked* balanced but produced repetitive
 draws and trivial first-move collisions), and the blind Thief no longer marches into the centre. The
-result is a genuine contest — **~56% Cop over seeds 1000–1029** (101 Cop / 79 Thief), with only ~7% of
+result is a genuine contest — **~54% Cop over seeds 1000–1029** (98 Cop / 82 Thief; the Thief also
+uses a coarse, untrusted belief from the Cop's messages under fog), with only ~7% of
 sub-games ending in an immediate (≤2-move) capture. The **bonus inter-group match** keeps the agreed
 **radius 2** with **unbounded** starts (`SHARED_MATCH_RULES` §2.9, via `match.vision_radius`),
 where the game is structurally **Cop-favoured** — expected pursuit-evasion on a near-fully-observed
