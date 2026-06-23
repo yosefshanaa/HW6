@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -30,8 +31,12 @@ def _sub_view(index, winner, cop_score, thief_score, moves, records, grid) -> di
 
 
 def run_live(sdk: CopThiefSDK, grid: list[int]) -> dict:
-    """Play a fresh local series and build the view-model with scores."""
-    results, series_dir = sdk.run_series()
+    """Play a fresh local series and build the view-model with scores.
+
+    Uses a **random seed** each call so the live GUI's *Play Again* yields a
+    genuinely different game (the headless pipeline keeps the reproducible seed).
+    """
+    results, series_dir = sdk.run_series(seed=random.randrange(2**31))
     report = sdk.build_report(results)
     subs = []
     for r in results:

@@ -96,7 +96,8 @@ uv run cop-thief-gui --replay results/<ts>/sub_game_1.jsonl
 ### Browser GUI
 
 Starts a tiny **loopback-only** GUI server (Python stdlib — no extra dependency, no network exposure)
-and opens it in your browser. A **▻ Play Again** button runs a brand-new series live. In the UI, one
+and opens it in your browser. A **▻ Play Again** button runs a brand-new, **randomly seeded** series
+live (a different game each press; the headless pipeline keeps its reproducible seed). In the UI, one
 **"game"** = one full **6-sub-game series**.
 
 ```bash

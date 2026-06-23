@@ -41,9 +41,15 @@ class CopThiefSDK:
         """Return the canonical project version."""
         return __version__
 
-    def run_series(self, results_dir: str | Path | None = None) -> tuple[list[SubGameResult], Path]:
-        """Play a full clean series; return the results and the series directory."""
-        orch = Orchestrator(self._config, results_dir=results_dir)
+    def run_series(
+        self, results_dir: str | Path | None = None, seed: int | None = None
+    ) -> tuple[list[SubGameResult], Path]:
+        """Play a full clean series; return the results and the series directory.
+
+        ``seed`` overrides the config seed (the live GUI passes a random one so
+        each run differs); omit it for the reproducible default.
+        """
+        orch = Orchestrator(self._config, results_dir=results_dir, seed=seed)
         results = orch.play_series()
         return results, orch.series_dir
 
