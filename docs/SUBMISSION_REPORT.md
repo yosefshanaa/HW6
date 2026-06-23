@@ -1,6 +1,6 @@
 # Submission Report — HW6: Dual AI Agent Race via MCP (Cop & Thief)
 
-**Version:** 1.00 · **Repo:** https://github.com/yosefshanaa/HW6 · **Date:** 2026-06-22
+**Version:** 1.00 · **Repo:** https://github.com/yosefshanaa/HW6 · **Date:** 2026-06-23
 
 A single-page overview tying the deliverables together for grading. Detailed docs are linked
 throughout.
@@ -30,14 +30,19 @@ the game outcome.
   contract tests. Servers **do not host the LLM**. [`PRD_mcp_servers.md`](PRD_mcp_servers.md)
 - **Reporting**: internal (§9.1) + bonus (§9.2) JSON builders; **mockable** Gmail reporter with a
   **JSON-only** body and least-privilege `gmail.send` scope. [`PRD_gmail_reporting.md`](PRD_gmail_reporting.md)
-- **Cross-cutting**: SDK facade, API Gatekeeper, structured JSONL logging + replay, text GUI,
-  bearer-token auth check, CI workflow.
+- **Cross-cutting**: SDK facade, API Gatekeeper, structured JSONL logging + replay, terminal +
+  **browser** GUIs (loopback server with a live **Play Again**), bearer-token auth check, CI workflow.
+- **Inter-group bonus dry-run** (`cop-thief-match`): two-team, role-swapping series on the loopback
+  transport with mirror-and-flag reconciliation; emits the §9.2 bonus JSON. Real partner endpoints
+  remain external.
 
 ## 3. How to run
 
 ```bash
 uv sync
 uv run cop-thief                 # full autonomous series → JSON-only report on stdout
+uv run cop-thief-web-gui         # browser GUI (loopback) with a live Play Again button
+uv run cop-thief-match           # two-team bonus dry-run (loopback) → §9.2 JSON on stdout
 uv run cop-thief-gui --replay results/<ts>/sub_game_1.jsonl
 uv run python notebooks/parameter_sweep.py     # local parameter sweep
 uv sync --extra mcp && uv run cop-thief-cop-server   # MCP server (localhost)
@@ -49,10 +54,10 @@ See [`README.md`](../README.md) for the full manual.
 
 | Gate | Result |
 |---|---|
-| Tests | **104 passed** (`uv run pytest`) |
-| Coverage | **97%** (target ≥85%, `fail_under=85`) |
+| Tests | **131 passed** (`uv run pytest`) |
+| Coverage | **98%** (target ≥85%, `fail_under=85`) |
 | Lint | **0** violations (`uv run ruff check`) |
-| File size | all ≤ **150** code lines (largest 137) |
+| File size | all ≤ **150** code lines (largest 147) |
 | Secrets | none tracked; `.env-example` only; `.gitignore` covers secrets/caches |
 | CI | `.github/workflows/ci.yml` (uv sync → ruff → pytest --cov) |
 

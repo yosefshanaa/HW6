@@ -3,7 +3,7 @@
 **Document:** Task tracking (`docs/TODO.md`)
 **Version:** 1.00
 **Companion docs:** [`PRD.md`](PRD.md), [`PLAN.md`](PLAN.md), per-mechanism `PRD_*.md`.
-**Last updated:** 2026-06-22
+**Last updated:** 2026-06-23
 
 > Status legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 > Priority: **P0** (must, blocks submission) · **P1** (should) · **P2** (nice-to-have).
@@ -13,9 +13,9 @@
 
 ---
 
-## Status Snapshot (2026-06-22)
+## Status Snapshot (2026-06-23)
 
-**Done & verified locally** (114 tests, 98% coverage, ruff clean):
+**Done & verified locally** (131 tests, 98% coverage, ruff clean):
 - Phases 1–10, 13–14: scaffold, config/version/secrets, engine, partial observation, baseline
   agents, MCP servers/tools/client, orchestrator + Technical-Loss, logging/replay, internal+bonus
   report JSON, **mocked** Gmail reporter, SDK + CLI, GUI text renderer + replay, CI workflow,

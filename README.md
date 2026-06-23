@@ -52,7 +52,7 @@ on the baseline heuristic agents.
   JSON-only body.
 - **Inter-group bonus dry-run** — a faithful two-team match on the loopback transport, with no
   external endpoints.
-- **Engineering gates** — SDK facade, API Gatekeeper for every external call, **118 tests / 97.6%
+- **Engineering gates** — SDK facade, API Gatekeeper for every external call, **131 tests / 98%
   coverage**, Ruff clean, CI, files ≤ 150 lines.
 
 ## Install
@@ -96,7 +96,7 @@ uv run cop-thief-gui --replay results/<ts>/sub_game_1.jsonl
 ### Browser GUI
 
 Starts a tiny **loopback-only** GUI server (Python stdlib — no extra dependency, no network exposure)
-and opens it in your browser. A **▻ Play Again** button runs a brand-new, **randomly seeded** series
+and opens it in your browser. A **↻ Play Again** button runs a brand-new, **randomly seeded** series
 live (a different game each press; the headless pipeline keeps its reproducible seed). In the UI, one
 **"game"** = one full **6-sub-game series**.
 
@@ -184,7 +184,7 @@ Each headless/GUI run writes, under `results/<timestamp>/`:
 
 Other commands:
 
-- `cop-thief-web-gui` → `results/web_gui.html` (or your `--output` path).
+- `cop-thief-web-gui --output <path>` → a self-contained static HTML file (live mode serves over loopback and writes no file).
 - `cop-thief-match` → `results/match-<timestamp>/sub_game_<n>.jsonl` + `bonus_report.json` (§9.2,
   with `totals_by_group`, `bonus_claim`, `mutual_agreement: true`).
 
@@ -297,7 +297,7 @@ uv run ruff check             # lint (zero violations required)
 uv run python notebooks/parameter_sweep.py   # local parameter-sensitivity sweep
 ```
 
-Latest local run: **118 passed**, **97.6% coverage**, **0 lint violations**.
+Latest local run: **131 passed**, **98% coverage**, **0 lint violations**.
 
 ## What is complete
 
@@ -310,7 +310,7 @@ Implemented and verified **locally, offline** (no LLM/cloud/credentials):
 - §9.1 internal + §9.2 bonus report builders; **mockable** Gmail sender (JSON-only body).
 - Terminal + browser GUIs with fog views and replay; structured JSONL logging.
 - Inter-group **loopback dry-run** (`cop-thief-match`) with mirror-and-flag reconciliation.
-- CI, 118 tests / 97.6% coverage, Ruff clean.
+- CI, 131 tests / 98% coverage, Ruff clean.
 
 ## External inputs still needed
 
