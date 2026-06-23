@@ -7,6 +7,7 @@ import json
 import jsonschema
 
 from cop_thief.constants import ReportType
+from cop_thief.domain.records import SubGameResult
 from cop_thief.domain.roles import PlayerRole
 from cop_thief.match.match_orchestrator import LocalMatch
 from cop_thief.match.team_system import TeamSystem
@@ -37,6 +38,48 @@ def test_role_split_swaps_at_halfway(config, tmp_path):
     assert match.roles(match.half) == (a, b)
     assert match.roles(match.half + 1) == (b, a)
     assert match.roles(config.get("num_games")) == (b, a)
+
+
+def test_team_totals_aggregate_by_team_with_role_swap(config, tmp_path):
+    """Role scores roll up to the correct TEAM, accounting for the 1-3 / 4-6 swap:
+    Team-A Cop in 1-3, Team-B Cop in 4-6 (Cop win 20/5, Thief win 5/10)."""
+    a, b = _teams(config)  # "Team-A", "Team-B"
+    match = LocalMatch(config, a, b, results_dir=tmp_path)
+    results = [
+        SubGameResult(1, PlayerRole.COP, 3, 20, 5),    # A Cop wins  -> A 20, B 5
+        SubGameResult(2, PlayerRole.THIEF, 25, 5, 10),  # A Cop loses -> A 5,  B 10
+        SubGameResult(3, PlayerRole.COP, 3, 20, 5),    # A Cop wins  -> A 20, B 5
+        SubGameResult(4, PlayerRole.THIEF, 25, 5, 10),  # B Cop loses -> B 5,  A 10
+        SubGameResult(5, PlayerRole.COP, 3, 20, 5),    # B Cop wins  -> B 20, A 5
+        SubGameResult(6, PlayerRole.THIEF, 25, 5, 10),  # B Cop loses -> B 5,  A 10
+    ]
+    assert match._totals(results) == {"Team-A": 70, "Team-B": 50}
+
+
+def test_bonus_report_sub_games_carry_team_attribution(config, tmp_path):
+    sdk = CopThiefSDK(config)
+    outcome, _ = sdk.run_local_match(results_dir=tmp_path)
+    report = sdk.build_bonus_report(outcome)
+    group_a = config.get("match.group_1", "Team-A")
+    group_b = config.get("match.group_2", "Team-B")
+    sg = report["sub_games"]
+    assert sg[0]["cop_group"] == group_a and sg[0]["thief_group"] == group_b   # 1-3: A Cop
+    assert sg[-1]["cop_group"] == group_b and sg[-1]["thief_group"] == group_a  # 4-6: B Cop
+    for row in sg:
+        assert row["winner_group"] in (row["cop_group"], row["thief_group"])
+
+
+def test_cli_prints_human_summary_to_stderr(tmp_path, monkeypatch, capsys):
+    from cop_thief.match import cli
+
+    monkeypatch.setattr("sys.argv", ["cop-thief-match", "--results-dir", str(tmp_path)])
+    cli.main()
+    captured = capsys.readouterr()
+    assert "Two-team bonus dry-run" in captured.err
+    assert "sub-game 1:" in captured.err and "Cop=" in captured.err and "Thief=" in captured.err
+    assert "team totals:" in captured.err
+    # stdout still carries the machine-readable §9.2 JSON as its last line
+    json.loads(captured.out.strip().splitlines()[-1])
 
 
 def test_two_engines_reconcile_cleanly(config, tmp_path):

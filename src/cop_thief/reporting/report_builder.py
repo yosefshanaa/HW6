@@ -38,10 +38,28 @@ def compute_bonus_claim(totals_by_group: dict[str, int]) -> dict[str, int]:
     return {team_a: 7, team_b: 10}
 
 
+def _bonus_sub_games(
+    results: list[SubGameResult], attribution: list[dict[str, str]] | None
+) -> list[dict[str, Any]]:
+    """Per-sub-game dicts, enriched with the team that played each role (and won)
+    when ``attribution`` is supplied — so the report reads by team, not just role."""
+    rows = []
+    for i, r in enumerate(results):
+        row = r.as_dict()
+        if attribution and i < len(attribution):
+            att = attribution[i]
+            row["cop_group"] = att["cop_group"]
+            row["thief_group"] = att["thief_group"]
+            row["winner_group"] = att["cop_group"] if row["winner"] == "cop" else att["thief_group"]
+        rows.append(row)
+    return rows
+
+
 def build_bonus_report(
     meta: dict[str, Any],
     results: list[SubGameResult],
     totals_by_group: dict[str, int],
+    attribution: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """Build the §9.2 inter-group report. ``meta`` holds team/url/student fields."""
     return {
@@ -56,7 +74,7 @@ def build_bonus_report(
         "timezone": meta.get("timezone", "Asia/Jerusalem"),
         "students_group_1": meta.get("students_group_1", []),
         "students_group_2": meta.get("students_group_2", []),
-        "sub_games": [r.as_dict() for r in results],
+        "sub_games": _bonus_sub_games(results, attribution),
         "totals_by_group": totals_by_group,
         "bonus_claim": compute_bonus_claim(totals_by_group),
         "mutual_agreement": True,
