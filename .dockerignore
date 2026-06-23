@@ -1,0 +1,33 @@
+# Keep the build context to source + config + lock only.
+.git/
+.github/
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Not needed in the runtime image
+tests/
+docs/
+notebooks/
+prompts/
+assets/
+data/
+logs/
+results/
+*.md
+!README.md
+
+# Never ship secrets
+.env
+.env.*
+credentials.json
+token.json
+*.pem
+*.key

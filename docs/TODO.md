@@ -15,7 +15,7 @@
 
 ## Status Snapshot (2026-06-23)
 
-**Done & verified locally** (131 tests, 98% coverage, ruff clean):
+**Done & verified locally** (135 tests, 98% coverage, ruff clean):
 - Phases 1–10, 13–14: scaffold, config/version/secrets, engine, partial observation, baseline
   agents, MCP servers/tools/client, orchestrator + Technical-Loss, logging/replay, internal+bonus
   report JSON, **mocked** Gmail reporter, SDK + CLI, GUI text renderer + replay, CI workflow,
@@ -34,8 +34,10 @@
 **Blocked on external inputs (documented, not faked):**
 - **Live Gmail send** — needs the team's Google account + OAuth (`credentials.json`/`token.json`);
   send path is coded + mocked-tested. See [`PRD_gmail_reporting.md`](PRD_gmail_reporting.md).
-- **Cloud deployment + bearer auth over HTTPS** — needs a cloud provider + credentials (Phase 15).
-  *(A local-testable bearer-token check is provided; cloud wiring is external.)*
+- **Live cloud HTTPS URL** — needs a cloud provider account (Phase 15). *(Bearer auth is now
+  **enforced** on the live HTTP server — 401 on bad/missing token — and the provider-agnostic
+  `Dockerfile` + runbook are done & tested; only the hosted endpoint is external. See
+  [`DEPLOY.md`](DEPLOY.md).)*
 - **Bonus inter-group match** — needs a real partner team + their MCP URLs/tokens (Phase 12).
 - **Research report artifacts** — parameter study, cost analysis, ISO 25010 mapping, screenshots
   (Phase 16).
@@ -170,9 +172,10 @@ an illegal action; optional Q-table trains on a toy run if implemented.
   `get_match_status`, `health_check`.
 - [x] **P0** Servers do **not** host the LLM; they wrap the referee view + validation only.
 - [x] **P0** Schema-validate all tool payloads (reject, don't crash).
-- [~] **P1** Bearer-token auth (`mcp/auth.py`, token from `MCP_AUTH_TOKEN`) — pure check
-  implemented + unit-tested; server logs enable/disable. Live per-request enforcement runs in the
-  cloud stage (Phase 15).
+- [x] **P1** Bearer-token auth (`mcp/auth.py` pure check + `mcp/asgi_auth.py` ASGI enforcement,
+  token from `MCP_AUTH_TOKEN`) — **enforced per request on the live HTTP server** (401 on
+  bad/missing token), verified end-to-end in `tests/unit/test_asgi_auth.py`. Only the public HTTPS
+  host is external (Phase 15).
 - [x] **P0** Contract tests for each tool payload + in-process client↔server round-trip.
 
 **DoD:** Both servers start on localhost (`:8001`/`:8002`); `health_check` returns version;
@@ -333,14 +336,18 @@ config values.
 
 **Deps:** Phases 6, 7. **Owner:** `@owner-TODO`.
 
-- [ ] **P1** Local: two servers + orchestrator documented in README.
-- [ ] **P1** Cloud: deploy MCP servers to a public host (e.g., Prefect Cloud).
-- [ ] **P1** Public HTTPS URLs; orchestrator calls outbound.
-- [ ] **P1** Token auth enabled; revoke procedure documented.
+- [x] **P1** Local: two servers + orchestrator documented in README; provider-agnostic `Dockerfile`
+  (`0.0.0.0:$PORT`, role-parameterised) + [`DEPLOY.md`](DEPLOY.md) runbook.
+- [ ] **P1** Cloud: deploy the image to a public host (Cloud Run / Fly / Render / Railway) — needs a
+  cloud account (external).
+- [ ] **P1** Public HTTPS URLs wired into `config.yaml`; orchestrator calls outbound (external host).
+- [x] **P1** Token auth **enforced** per request (`mcp/asgi_auth.py`, 401 on bad/missing token,
+  end-to-end tested); revoke = rotate `MCP_AUTH_TOKEN` + redeploy, documented in `DEPLOY.md`.
 - [ ] **P2** If using Ollama: loopback-only or secure tunnel (ngrok/Nginx + auth + HTTPS); never
   exposed directly.
 
 **DoD:** Cloud MCP servers reachable over HTTPS with token auth; a series runs against cloud URLs.
+*(Image + enforced auth done & tested locally; the live HTTPS host is the remaining external step.)*
 
 ---
 
@@ -401,8 +408,8 @@ cost analysis, and prompt book.
   **Pending:** plugin extension points; attribution list.
 
 **Assignment-specific**
-- [~] **P0** Two independent MCP servers ✅; servers don't host the LLM ✅; **HTTPS + token is the
-  cloud stage** (external).
+- [~] **P0** Two independent MCP servers ✅; servers don't host the LLM ✅; **token auth enforced**
+  (401) + Docker image ✅; only the live **public HTTPS host** is the external cloud stage.
 - [~] **P0** 6 clean sub-games + Technical-Loss rerun ✅ (tested); JSON-only report body ✅ (tested,
   mocked send). **Live email** to `rmisegal+uoh26b@gmail.com` needs Gmail OAuth (external).
 - [x] **P0** Internal report JSON (§9.1) ✅; bonus inter-group JSON (§9.2) builder with
@@ -425,7 +432,7 @@ Provide these to finish the corresponding phases:
 |---|---|---|
 | 1 | **Team name + student names/IDs** | `report.group_name`/`students`; PRD §21; report JSON |
 | 2 | **Google account + OAuth approval** (Desktop Client ID → `credentials.json`; approve live send) | Phase 10 live email to `rmisegal+uoh26b@gmail.com` |
-| 3 | **Cloud provider + credentials** (e.g., Prefect Cloud) and **`MCP_AUTH_TOKEN`** | Phase 15 HTTPS deploy + live bearer enforcement; real `cop_mcp_url`/`thief_mcp_url` |
+| 3 | **Cloud provider account** (+ a generated **`MCP_AUTH_TOKEN`**) | Phase 15 live **public HTTPS URL** → real `cop_url`/`thief_url`. Token enforcement + `Dockerfile`/runbook are done & tested; only the hosted endpoint is external |
 | 4 | **Partner team** name + their 4 MCP URLs + token (out of band) | Phase 12 bonus match + matching §9.2 report |
 | 5 | **LLM provider/model + API key** (in `.env` as `LLM_API_KEY`) | LLM-driven agents; real token **cost analysis** numbers |
 

@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from cop_thief.mcp.server_app import build_app
-from cop_thief.shared.config import load_config
+from cop_thief.mcp.serve import run_server
 
 
 def main() -> None:
-    """Launch the Cop FastMCP server on its configured host/port."""
-    config = load_config()
-    app = build_app("cop", config)
-    app.run(transport="http", host=config.get("mcp.cop_host"), port=config.get("mcp.cop_port"))
+    """Launch the Cop FastMCP server over HTTP with enforced bearer auth."""
+    run_server("cop")
 
 
 if __name__ == "__main__":

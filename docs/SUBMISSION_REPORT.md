@@ -31,10 +31,13 @@ the game outcome.
 - **Reporting**: internal (§9.1) + bonus (§9.2) JSON builders; **mockable** Gmail reporter with a
   **JSON-only** body and least-privilege `gmail.send` scope. [`PRD_gmail_reporting.md`](PRD_gmail_reporting.md)
 - **Cross-cutting**: SDK facade, API Gatekeeper, structured JSONL logging + replay, terminal +
-  **browser** GUIs (loopback server with a live **Play Again**), bearer-token auth check, CI workflow.
+  **browser** GUIs (loopback server with a live **Play Again**), **enforced** bearer-token auth
+  (HTTP 401 on a bad/missing token), CI workflow.
 - **Inter-group bonus dry-run** (`cop-thief-match`): two-team, role-swapping series on the loopback
   transport with mirror-and-flag reconciliation; emits the §9.2 bonus JSON. Real partner endpoints
   remain external.
+- **Cloud deploy path**: provider-agnostic `Dockerfile` (`0.0.0.0:$PORT`) + runbook
+  [`DEPLOY.md`](DEPLOY.md); token enforcement tested end-to-end. The live HTTPS URL is external.
 
 ## 3. How to run
 
@@ -54,7 +57,7 @@ See [`README.md`](../README.md) for the full manual.
 
 | Gate | Result |
 |---|---|
-| Tests | **131 passed** (`uv run pytest`) |
+| Tests | **135 passed**, 1 skipped (`uv run pytest`; +4 live-server checks with `--extra mcp`) |
 | Coverage | **98%** (target ≥85%, `fail_under=85`) |
 | Lint | **0** violations (`uv run ruff check`) |
 | File size | all ≤ **150** code lines (largest 147) |
@@ -83,7 +86,7 @@ Architecture/ADRs: [`PLAN.md`](PLAN.md). Requirements: [`PRD.md`](PRD.md). Task 
 **Done locally:** Phases 1–10, 13–14, CI, prompt book, analysis docs (see
 [`TODO.md`](TODO.md) status snapshot).
 
-**Gated on external inputs** (documented, not faked): live Gmail OAuth send, cloud HTTPS deploy +
-live bearer enforcement, partner bonus match, real cloud MCP URLs, team/student details, LLM
-provider/model. Full list:
+**Gated on external inputs** (documented, not faked): live Gmail OAuth send, a live cloud HTTPS URL
+(token enforcement + Docker image are done & tested — see [`DEPLOY.md`](DEPLOY.md)), partner bonus
+match, team/student details, LLM provider/model. Full list:
 [`TODO.md` §External Inputs Needed](TODO.md#external-inputs-needed).

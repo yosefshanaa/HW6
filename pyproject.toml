@@ -65,6 +65,7 @@ omit = [
     "src/cop_thief/mcp/cop_server.py",
     "src/cop_thief/mcp/thief_server.py",
     "src/cop_thief/mcp/server_app.py",
+    "src/cop_thief/mcp/asgi_auth.py",
 ]
 
 [tool.coverage.report]
