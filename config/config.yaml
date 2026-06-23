@@ -42,6 +42,8 @@ llm:
   per_turn_timeout_seconds: 30
 
 # --- MCP servers ---
+# Local host/port for dev. In the cloud, $PORT overrides the port and the server binds
+# 0.0.0.0 (see mcp/serve.py::resolve_bind); deploy via Dockerfile + docs/DEPLOY.md.
 mcp:
   cop_host: "127.0.0.1"
   cop_port: 8001

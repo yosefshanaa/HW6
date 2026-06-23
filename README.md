@@ -52,7 +52,7 @@ on the baseline heuristic agents.
   JSON-only body.
 - **Inter-group bonus dry-run** — a faithful two-team match on the loopback transport, with no
   external endpoints.
-- **Engineering gates** — SDK facade, API Gatekeeper for every external call, **131 tests / 98%
+- **Engineering gates** — SDK facade, API Gatekeeper for every external call, **135 tests / 98%
   coverage**, Ruff clean, CI, files ≤ 150 lines.
 
 ## Install
@@ -144,6 +144,14 @@ uv run cop-thief-thief-server    # Thief FastMCP server (default 127.0.0.1:8002)
 Each server exposes six tools — `get_observation`, `submit_turn`, `receive_message`,
 `validate_action`, `get_match_status`, `health_check` — and **does not host the LLM**. The
 orchestrator/MCP client drives the game.
+
+**Auth & cloud deploy.** When `MCP_AUTH_TOKEN` is set, every HTTP request must carry
+`Authorization: Bearer <token>` or it is **rejected with 401** before reaching any tool
+(enforced by `mcp/asgi_auth.py`, verified end-to-end in `tests/unit/test_asgi_auth.py`); with no
+token set, auth is disabled for local dev. A provider-agnostic [`Dockerfile`](Dockerfile) binds
+`0.0.0.0:$PORT` so the same image runs on Cloud Run / Fly / Render / Railway — full runbook
+(build, token rotation/revoke, per-platform deploy, wiring the HTTPS URLs) in
+[`docs/DEPLOY.md`](docs/DEPLOY.md). The live HTTPS endpoint still needs your own cloud account.
 
 ### Two-team / bonus dry-run
 
@@ -297,7 +305,7 @@ uv run ruff check             # lint (zero violations required)
 uv run python notebooks/parameter_sweep.py   # local parameter-sensitivity sweep
 ```
 
-Latest local run: **131 passed**, **98% coverage**, **0 lint violations**.
+Latest local run: **135 passed** (+4 with the `mcp` extra), **98% coverage**, **0 lint violations**.
 
 ## What is complete
 
@@ -310,7 +318,9 @@ Implemented and verified **locally, offline** (no LLM/cloud/credentials):
 - §9.1 internal + §9.2 bonus report builders; **mockable** Gmail sender (JSON-only body).
 - Terminal + browser GUIs with fog views and replay; structured JSONL logging.
 - Inter-group **loopback dry-run** (`cop-thief-match`) with mirror-and-flag reconciliation.
-- CI, 131 tests / 98% coverage, Ruff clean.
+- **Enforced** bearer-token auth on the live MCP HTTP servers + a provider-agnostic
+  `Dockerfile`/runbook ([`docs/DEPLOY.md`](docs/DEPLOY.md)) for cloud deploy.
+- CI, 135 tests / 98% coverage, Ruff clean.
 
 ## External inputs still needed
 
@@ -322,12 +332,14 @@ accounts/credentials are missing (full list:
 |---|---|
 | **Team name + student names/IDs** | `report.group_name`/`students` (currently `TODO:` placeholders in config) |
 | **Google account + OAuth** (`credentials.json`/`token.json`) | A real live Gmail send |
-| **Cloud provider + `MCP_AUTH_TOKEN`** | HTTPS deploy + live bearer enforcement; real `cop_mcp_url`/`thief_mcp_url` |
+| **Cloud provider account** (+ a generated `MCP_AUTH_TOKEN`) | A live **public HTTPS URL** per server → fills `cop_url`/`thief_url`. Token enforcement, `0.0.0.0:$PORT` binding, and the `Dockerfile`/runbook are done & tested; only the hosted endpoint is external |
 | **Partner team + their 4 MCP URLs/tokens** | A real bonus inter-group match |
 | **LLM provider/model + API key** | LLM-driven agents + real token-cost numbers |
 
-> Not claimed as done: **cloud HTTPS deployment** and a **live Gmail send** are not run in this repo
-> (a local-testable bearer-token check exists; the cloud wiring is the external stage).
+> Not claimed as done: a **live cloud HTTPS deployment** and a **live Gmail send** are not run in this
+> repo. The container image, `0.0.0.0:$PORT` binding, and **enforced** bearer-token auth (401 on a
+> bad/missing token) are implemented and tested locally ([`docs/DEPLOY.md`](docs/DEPLOY.md)); the
+> hosted HTTPS URL is the external stage.
 
 ## Project layout
 
@@ -349,6 +361,7 @@ results/          per-series logs + report.json (git-ignored)
 | [`docs/PRD.md`](docs/PRD.md) · [`PLAN.md`](docs/PLAN.md) · [`TODO.md`](docs/TODO.md) | Requirements · architecture/ADRs · task tracking |
 | `docs/PRD_*.md` | Per-mechanism PRDs (engine, MCP, strategy, partial-observability, Gmail, bonus, GUI/logs) |
 | [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) | Local parameter-sensitivity study + balance analysis |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Cloud deploy runbook (Docker, token auth/revoke, HTTPS URLs) |
 | [`docs/COST_ANALYSIS.md`](docs/COST_ANALYSIS.md) | LLM token cost model + optimization |
 | [`docs/QUALITY_MAPPING.md`](docs/QUALITY_MAPPING.md) | ISO/IEC 25010 evidence map |
 | [`prompts/PROMPT_BOOK.md`](prompts/PROMPT_BOOK.md) · [`turn_templates.md`](prompts/turn_templates.md) | Prompt log + LLM turn templates |
