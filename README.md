@@ -71,7 +71,7 @@ uv sync --extra gmail   # + Google client libs — only for real email sending
 |---|---|---|
 | **Headless** | `uv run cop-thief` | Autonomous series; **JSON-only** report on stdout |
 | **Terminal GUI** | `uv run cop-thief-gui` | Text boards + fog-of-war in the terminal |
-| **Browser GUI** | `uv run cop-thief-web-gui` | Self-contained local HTML: board, fog, scores, replay |
+| **Browser GUI** | `uv run cop-thief-web-gui` | Live loopback GUI (board, fog, scores) with a **Play Again** button; `--output` for static export |
 | **Replay** | `… --replay <path>` | Re-render a stored series/sub-game from its JSONL |
 | **Bonus dry-run** | `uv run cop-thief-match` | Two-team bonus series on loopback; §9.2 JSON report |
 | **MCP servers** | `uv run cop-thief-cop-server` · `…-thief-server` | Stand up the two FastMCP servers on localhost |
@@ -95,13 +95,23 @@ uv run cop-thief-gui --replay results/<ts>/sub_game_1.jsonl
 
 ### Browser GUI
 
-Renders a **self-contained local HTML page** (no network/CDN) and opens it in your default browser.
+Starts a tiny **loopback-only** GUI server (Python stdlib — no extra dependency, no network exposure)
+and opens it in your browser. A **▻ Play Again** button runs a brand-new series live. In the UI, one
+**"game"** = one full **6-sub-game series**.
 
 ```bash
-uv run cop-thief-web-gui                                # play a fresh series, then open it
-uv run cop-thief-web-gui --replay results/<ts>/         # replay a whole series directory
-uv run cop-thief-web-gui --replay results/<ts>/sub_game_1.jsonl   # replay one sub-game
-uv run cop-thief-web-gui --no-open --output out.html    # just write the HTML (headless)
+uv run cop-thief-web-gui                                # live GUI at http://127.0.0.1:<port>/ (Ctrl+C to stop)
+uv run cop-thief-web-gui --port 8800                    # pin the port (default: auto-select)
+uv run cop-thief-web-gui --no-open                      # start the server without opening a browser
+```
+
+**Static export** (`--output`) writes a self-contained HTML file and exits — for screenshots and
+replay evidence (the Play Again button is hidden, since a static file can't run Python):
+
+```bash
+uv run cop-thief-web-gui --no-open --output out.html              # static snapshot of a fresh series
+uv run cop-thief-web-gui --replay results/<ts>/ --output out.html # static replay of a stored series
+uv run cop-thief-web-gui --replay results/<ts>/sub_game_1.jsonl --output out.html  # one sub-game
 ```
 
 It shows, side by side:

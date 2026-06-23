@@ -99,3 +99,14 @@ def test_build_html_embeds_view_model():
     assert "Cop &amp; Thief" in html
     assert 'id="board"' in html
     assert json.dumps(vm) in html                 # exact data embedded
+
+
+def test_build_html_live_flag_controls_play_again():
+    vm = {"grid_size": [5, 5], "totals": {"cop": 0, "thief": 0}, "sub_games": []}
+    live = build_html(vm, live=True)
+    static = build_html(vm)                        # default: static export
+    assert "__LIVE_ENABLED__" not in live and "__LIVE_ENABLED__" not in static
+    assert "const LIVE = true" in live             # live: Play Again active
+    assert "const LIVE = false" in static          # static: hidden (can't run Python)
+    assert 'id="again"' in live and 'id="again"' in static   # button present in the markup
+    assert "let DATA =" in live                    # DATA is mutable so Play Again can replace it

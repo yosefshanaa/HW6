@@ -103,6 +103,7 @@
   </header>
 
   <div class="rail">
+    <button id="again" class="run" title="run a brand-new 6-sub-game series">↻ Play Again</button>
     <label>SUB-GAME <select id="sub"></select></label>
     <button id="prev" title="previous step">⏮ Prev</button>
     <button id="play" class="run" title="play / pause">▶ Run</button>
@@ -160,7 +161,8 @@
 </div>
 
 <script>
-const DATA = __VIEW_MODEL__;
+let DATA = __VIEW_MODEL__;
+const LIVE = __LIVE_ENABLED__;           // true only under the local GUI server
 const GLYPH = {C:'C', T:'T', '#':'▦', '.':'·', '?':'?'};
 const CLS   = {C:'c', T:'t', '#':'b', '.':'e', '?':'u'};
 const $ = id => document.getElementById(id);
@@ -248,6 +250,22 @@ $('play').addEventListener('click',()=>{
   }, +$('speed').value);
 });
 $('speed').addEventListener('change',()=>{ if(timer){ stop(); $('play').click(); } });
+const again=$('again');
+if(!LIVE){ again.style.display='none'; }     // static export can't run Python — hide it
+else $('again').addEventListener('click',async()=>{
+  stop();
+  const lbl=again.textContent; again.disabled=true; again.textContent='Generating…';
+  try{
+    const res=await fetch('/api/new-series',{method:'POST'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    DATA=await res.json();
+    $('sub').value=0; initSub(); setRoundMax(); render();   // fresh series from move 0
+    again.textContent=lbl;
+  }catch(e){
+    again.textContent='⚠ Retry';
+    $('scores').innerHTML='<span class="chip thief">error</span> could not generate a new series — '+e.message;
+  }finally{ again.disabled=false; }
+});
 initSub(); setRoundMax(); render();
 </script>
 </body>
