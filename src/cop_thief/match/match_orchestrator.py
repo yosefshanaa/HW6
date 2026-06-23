@@ -31,11 +31,17 @@ from cop_thief.shared.replay import ReplayStore
 
 @dataclass
 class MatchOutcome:
-    """A full local match: per-sub-game results, team totals, reconcile flags."""
+    """A full local match: per-sub-game results, team totals, reconcile flags.
+
+    ``attribution`` aligns with ``results``: for each sub-game it records which
+    team played Cop and which played Thief (the role split swaps at the halfway
+    sub-game), so scores can be read by team and not only by role.
+    """
 
     results: list[SubGameResult]
     totals_by_group: dict[str, int]
     flags: list[str] = field(default_factory=list)
+    attribution: list[dict[str, str]] = field(default_factory=list)
 
 
 class LocalMatch:
@@ -141,13 +147,16 @@ class LocalMatch:
         """Play ``num_games`` clean sub-games, re-running technical losses."""
         results: list[SubGameResult] = []
         flags: list[str] = []
+        attribution: list[dict[str, str]] = []
         for index in range(1, self.num_games + 1):
             (result, _winner, sg_flags), _voided = run_clean(
                 lambda attempt, i=index: self.play_sub_game(i, attempt)
             )
             results.append(result)
             flags.extend(sg_flags)
-        return MatchOutcome(results, self._totals(results), flags)
+            cop_team, thief_team = self.roles(index)
+            attribution.append({"cop_group": cop_team.name, "thief_group": thief_team.name})
+        return MatchOutcome(results, self._totals(results), flags, attribution)
 
     def _totals(self, results: list[SubGameResult]) -> dict[str, int]:
         totals = {self.team_a.name: 0, self.team_b.name: 0}

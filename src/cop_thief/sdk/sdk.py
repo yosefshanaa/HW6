@@ -71,7 +71,7 @@ class CopThiefSDK:
     def build_bonus_report(self, outcome: MatchOutcome) -> dict[str, Any]:
         """Build + validate the §9.2 inter-group report from a match outcome."""
         report = build_bonus_report_dict(
-            self._bonus_meta(), outcome.results, outcome.totals_by_group
+            self._bonus_meta(), outcome.results, outcome.totals_by_group, outcome.attribution
         )
         validate_report(report, ReportType.BONUS)
         return report

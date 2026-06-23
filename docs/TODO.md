@@ -283,12 +283,14 @@ live or replayed series; calls only the SDK.
 - [~] **P1** Swap timestamped logs after the match for joint debugging. *(We write per-turn
   timestamped JSONL incl. reconcile flags; the swap itself needs a partner.)*
 
-**Local interop dry-run (2026-06-22):** `uv run cop-thief-match` plays the full 6-sub-game bonus
-series between two `TeamSystem` peers over the loopback MCP transport (cop-side authoritative referee
-+ thief-side mirror, envelope via `submit_turn`, role swap, Technical-Loss rerun) and emits the §9.2
-report. De-risks Phase 12 with **no external endpoints**; the real match swaps the loopback transport
-for the partner's MCP URLs + tokens. Covered by `tests/integration/test_local_match.py` +
-`tests/unit/test_reconcile.py`.
+**Local interop dry-run (2026-06-22, extended 2026-06-23):** `uv run cop-thief-match` plays the full
+6-sub-game bonus series between two `TeamSystem` peers over the loopback MCP transport (cop-side
+authoritative referee + thief-side mirror, envelope via `submit_turn`, role swap, Technical-Loss
+rerun) and emits the §9.2 report. **Scores aggregate by team** (`totals_by_group`) and each sub-game
+in the report carries `cop_group`/`thief_group`/`winner_group`; the CLI prints a human-readable
+per-sub-game + team-total summary to stderr (stdout stays JSON-only). De-risks Phase 12 with **no
+external endpoints**; the real match swaps the loopback `InProcessTransport` for the partner's MCP
+URLs + tokens. Covered by `tests/integration/test_local_match.py` + `tests/unit/test_reconcile.py`.
 
 **DoD:** A cross-team series of 6 clean sub-games runs over HTTPS+token; both teams' JSON match
 field-for-field with `mutual_agreement: true`. *(Local dry-run done; HTTPS+partner is external.)*

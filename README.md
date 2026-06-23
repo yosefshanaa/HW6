@@ -145,6 +145,34 @@ Each server exposes six tools — `get_observation`, `submit_turn`, `receive_mes
 `validate_action`, `get_match_status`, `health_check` — and **does not host the LLM**. The
 orchestrator/MCP client drives the game.
 
+### Two-team / bonus dry-run
+
+`uv run cop-thief` is the **required internal series** — one group's Cop vs its *own* Thief, fixed
+roles for all 6 sub-games. `uv run cop-thief-match` is a **separate** command for the **two-team,
+role-swapping** bonus series:
+
+```bash
+uv run cop-thief-match                        # Team A vs Team B; §9.2 JSON on stdout, summary on stderr
+uv run cop-thief-match --results-dir results  # also persist replay logs + bonus_report.json
+```
+
+- **Role split:** sub-games **1–3** = Team A **Cop** vs Team B **Thief**; **4–6** = Team B **Cop** vs
+  Team A **Thief**.
+- **Scores aggregate by team** (not just role): Cop win → Cop-team 20 / Thief-team 5; Thief win →
+  Cop-team 5 / Thief-team 10. The §9.2 report carries `totals_by_group`, `bonus_claim`, per-sub-game
+  `cop_group`/`thief_group`/`winner_group`, and `mutual_agreement: true`.
+- **Human summary** (stderr) prints, per sub-game: which team is Cop, which is Thief, the winner team,
+  and role scores — then team totals, bonus claim, and the output directory. stdout stays JSON-only.
+- **One authoritative referee per sub-game** (the Cop-side team); the Thief side runs a **mirror**
+  engine reconciled every turn ("mirror-and-flag"). Teams talk through a `Transport` seam (loopback
+  `InProcessTransport` today); a remote HTTPS/token MCP transport can replace it later without
+  changing the match logic.
+
+**Still external-gated** (documented, not faked): a **real partner team**, their **public HTTPS MCP
+URLs** + **tokens** (exchanged out of band), and both teams emailing **identical** §9.2 JSON with
+`mutual_agreement: true`. Team/URL/student fields come from the `match:` block in
+[`config/config.yaml`](config/config.yaml) and stay `TODO:` until filled.
+
 ## Expected outputs
 
 Each headless/GUI run writes, under `results/<timestamp>/`:

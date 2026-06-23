@@ -13,10 +13,29 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 
 from cop_thief.sdk.sdk import CopThiefSDK
 from cop_thief.shared.config import load_config
 from cop_thief.shared.logging_setup import get_logger, setup_logging
+
+
+def _print_summary(report: dict, series_dir) -> None:
+    """Human-readable per-sub-game + team-total summary (to stderr; stdout stays JSON)."""
+    g = report["groups"]
+    out = sys.stderr
+    print(f"\n=== Two-team bonus dry-run (local loopback) ===\n  {g['group_1']}  vs  {g['group_2']}",
+          file=out)
+    for sg in report["sub_games"]:
+        cop, thief = sg.get("cop_group", "?"), sg.get("thief_group", "?")
+        print(f"  sub-game {sg['index']}: Cop={cop:<16} Thief={thief:<16} "
+              f"winner={sg.get('winner_group', '?')} ({sg['winner']})  "
+              f"scores cop {sg['cop_score']} / thief {sg['thief_score']}", file=out)
+    fmt = lambda d: ", ".join(f"{k} {v}" for k, v in d.items())  # noqa: E731
+    print(f"  team totals: {fmt(report['totals_by_group'])}", file=out)
+    print(f"  bonus claim: {fmt(report['bonus_claim'])}  (mutual_agreement="
+          f"{str(report['mutual_agreement']).lower()})", file=out)
+    print(f"  output dir : {series_dir}/  (sub_game_*.jsonl + bonus_report.json)", file=out)
 
 
 def main() -> None:
@@ -43,8 +62,8 @@ def main() -> None:
         log.warning("engine reconciliation flags: %d (see sub-game logs)", len(outcome.flags))
     else:
         log.info("engines reconciled cleanly across all sub-games")
-    log.info("totals by group: %s", report["totals_by_group"])
-    print(json.dumps(report))
+    _print_summary(report, series_dir)
+    print(json.dumps(report))  # stdout: the §9.2 report (JSON only, last line)
 
 
 if __name__ == "__main__":
