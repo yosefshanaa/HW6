@@ -38,6 +38,12 @@ uv run python notebooks/parameter_sweep.py
 
 ### Barrier ablation (Cop win-rate with vs. without barriers)
 
+> **Note (2026-06-24):** these figures were measured with the original **own-cell** barrier rule and
+> the **heuristic** Cop. The inter-group match later adopted the lecturer-confirmed **adjacent-cell**
+> rule, under which the greedy heuristic Cop no longer dominates at r2 (~6–11%). The competitive
+> agents are now the **search** (minimax) agents, whose Cop captures **100%** at r2 by pursuit alone
+> (barriers optional) — so the "r2 is Cop-favoured" conclusion still holds for competent play.
+
 | grid | vision_radius | no barriers | ≤5 barriers |
 |---|---|---|---|
 | 5x5 | 2 | **0%** | **100%** |

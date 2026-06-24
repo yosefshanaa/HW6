@@ -59,7 +59,8 @@ def test_cop_barrier_decision_consumes_budget():
     mem = {"max_barriers": 5}
     action = strat.decide(o, mem)
     assert action.type is ActionType.BARRIER
-    assert action.to == Position(2, 2)
+    assert Position(2, 2).is_king_step_to(action.to)   # adjacent to the cop, not its own cell
+    assert action.to != Position(4, 2)                 # never the thief's cell
     assert mem["barriers_placed"] == 1
 
 

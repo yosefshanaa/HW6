@@ -26,7 +26,8 @@ COP_SYSTEM = (
     "You are the COP in a turn-based pursuit game on a grid. You WIN by moving "
     "onto the THIEF's exact cell (capture). Each turn you either move one king-step "
     "(8 directions, includes diagonals) to an adjacent cell, or place a BARRIER on "
-    "your own cell to shrink the thief's space (limited budget). You only see the "
+    "an empty cell next to you (you stay put) to shrink the thief's space (limited "
+    "budget). You only see the "
     "thief inside your vision radius; otherwise infer from memory and the thief's "
     "messages, which MAY BE LIES.\n"
     "Tactics: (1) ALWAYS reduce Chebyshev distance to the thief — pick the legal "
@@ -111,8 +112,8 @@ def build_user_prompt(role: PlayerRole, obs: Observation, memory: dict) -> str:
     if role is PlayerRole.COP:
         left = memory.get("max_barriers", 5) - memory.get("barriers_placed", 0)
         lines.append(
-            f"Barriers left: {left}. To wall your own cell instead of moving, "
-            'set "barrier": true.'
+            f"Barriers left: {left}. To wall an empty cell next to you instead of "
+            'moving (you stay put), set "barrier": true.'
         )
     lines.append(
         "Legal moves (pick one [row,col] for \"move\"; dist=Chebyshev to opponent, "

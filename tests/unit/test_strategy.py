@@ -40,7 +40,8 @@ def test_cop_places_barrier_to_herd_edge_pinned_thief():
     memory = {"max_barriers": 5}
     action = make_strategy(PlayerRole.COP).decide(o, memory)
     assert action.type is ActionType.BARRIER
-    assert action.to == Position(4, 2)              # barrier is on the Cop's own cell
+    assert Position(4, 2).is_king_step_to(action.to)   # barrier on a cell adjacent to the Cop
+    assert action.to != Position(4, 4)                 # never the Thief's cell
     assert memory["barriers_placed"] == 1
     # ...and the engine agrees it is a legal action.
     ref = Referee([5, 5], 25, 5, SCORING, 2)

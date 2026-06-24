@@ -49,12 +49,21 @@ def test_thief_keeps_uncapturable_distance():
     assert a.to.chebyshev(Position(1, 1)) >= 2    # uncapturable next turn
 
 
-def test_cop_can_place_a_barrier_when_it_is_the_only_legal_action():
-    # Cop walled in on all sides but with budget -> the only legal action is a barrier.
-    walls = list(Position(2, 2).neighbors8())
-    a = search_action(PlayerRole.COP, obs(PlayerRole.COP, Position(2, 2), Position(4, 4),
-                                          barriers=walls), {}, **KW)
-    assert a is not None and a.type is ActionType.BARRIER and a.to == Position(2, 2)
+def test_search_offers_only_adjacent_barriers_within_budget():
+    from cop_thief.agents.strategy.search import _legal, _Sim
+
+    sim = _Sim(cop=Position(2, 2), thief=Position(0, 0), barriers=frozenset(),
+               thief_moves=0, placed=0, turn=PlayerRole.COP,
+               grid=(5, 5), max_moves=25, max_barriers=5)
+    barriers = [a for a in _legal(sim) if a.type is ActionType.BARRIER]
+    assert barriers, "a Cop with budget should be offered barrier actions"
+    for a in barriers:                                  # each on an empty adjacent cell
+        assert Position(2, 2).is_king_step_to(a.to) and a.to != Position(0, 0)
+    # Budget exhausted -> no barrier actions offered.
+    spent = _Sim(cop=Position(2, 2), thief=Position(0, 0), barriers=frozenset(),
+                 thief_moves=0, placed=5, turn=PlayerRole.COP,
+                 grid=(5, 5), max_moves=25, max_barriers=5)
+    assert all(a.type is ActionType.MOVE for a in _legal(spent))
 
 
 def _state(cop, thief, barriers, placed, turn):

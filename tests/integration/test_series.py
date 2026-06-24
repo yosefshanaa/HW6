@@ -111,8 +111,8 @@ def test_run_series_seed_override_varies_and_reproduces(config, tmp_path):
 
 
 def test_barrier_turns_are_single_action_in_logs(config, tmp_path):
-    """Authoritative JSONL proof: every Cop barrier turn places a barrier on the
-    Cop's own cell and does NOT also move the Cop (one committed action/turn).
+    """Authoritative JSONL proof: every Cop barrier turn walls a cell adjacent to
+    the Cop and does NOT also move the Cop (one committed action/turn).
     Uses radius 2 so the Cop actually exercises barriers."""
     Orchestrator(_with(config, vision_radius=2), results_dir=tmp_path).play_series()
     saw_barrier = False
@@ -124,7 +124,8 @@ def test_barrier_turns_are_single_action_in_logs(config, tmp_path):
             if (rec["role"] == PlayerRole.COP.value
                     and rec["action"]["type"] == ActionType.BARRIER.value):
                 saw_barrier = True
-                assert rec["action"]["to"] == post           # barrier on the Cop's cell
+                to = rec["action"]["to"]
+                assert max(abs(to[0] - post[0]), abs(to[1] - post[1])) == 1  # adjacent to Cop
                 assert prev_cop is None or post == prev_cop   # Cop did not move
             prev_cop = post
     assert saw_barrier, "no barrier turn was exercised — test scenario is vacuous"
@@ -163,10 +164,13 @@ def test_default_config_series_is_balanced_not_all_cop(config, tmp_path):
 
 
 def test_r2_remains_cop_favoured(config, tmp_path):
-    """The agreed bonus radius (2, unbounded starts) stays Cop-favoured. The local
-    balance fix (radius 1 + start cap) must NOT silently alter the bonus-match
-    assumptions, and must not weaken the engine."""
-    r2 = _with(config, vision_radius=2, start_distance_max=None)
+    """The agreed bonus radius (2, unbounded starts) is structurally Cop-favoured for
+    competent agents — the search Cop captures a strong evader on the small, fully-seen
+    board. (The simple heuristic Cop is a weak pursuer that relied on the old own-cell
+    barrier; under the lecturer-agreed adjacent-cell rule the *search* agents — which the
+    match uses — carry the cop-favoured property.)"""
+    r2 = _with(config, vision_radius=2, start_distance_max=None, start_distance_min=None,
+               search={"depth": 6}, agents={"cop_strategy": "search", "thief_strategy": "search"})
     cop = thief = 0
     for seed in range(1000, 1003):
         cfg = _with(r2, seed=seed, start_mode="random")

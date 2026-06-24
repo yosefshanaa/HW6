@@ -8,8 +8,9 @@ budget — so the search can never forfeit a sub-game with an illegal action.
 
 It mirrors the engine exactly (``engine.rules`` / ``engine.referee``): thief moves
 first, either player landing on the other's cell is a Cop win (a Thief stepping
-onto the Cop loses), a barrier consumes the Cop's turn, and the Thief wins once it
-has made ``max_moves`` moves and survived the Cop's reply. Search is only used
+onto the Cop loses), a barrier walls an empty cell king-adjacent to the Cop (the
+Cop stays put) and consumes its turn, and the Thief wins once it has made
+``max_moves`` moves and survived the Cop's reply. Search is only used
 when the opponent is visible (perfect local info); under fog the caller falls back
 to the belief-based heuristic.
 """
@@ -60,7 +61,11 @@ def _legal(sim: _Sim) -> list[Action]:
         if n.in_bounds(sim.grid) and n not in sim.barriers
     ]
     if sim.turn is PlayerRole.COP and sim.placed < sim.max_barriers:
-        acts.append(Action.barrier(sim.cop))  # wall own cell (always legal here)
+        acts += [
+            Action.barrier(n)  # wall an empty cell adjacent to the cop (cop stays put)
+            for n in sim.cop.neighbors8()
+            if n.in_bounds(sim.grid) and n not in sim.barriers and n != sim.thief
+        ]
     return acts
 
 
@@ -68,7 +73,7 @@ def _apply(sim: _Sim, act: Action) -> tuple[_Sim, str | None]:
     """Advance one ply. Returns (next_sim, terminal) with terminal in {cop,thief,None}."""
     if act.type is ActionType.BARRIER:
         nxt = replace(
-            sim, barriers=sim.barriers | {sim.cop}, placed=sim.placed + 1, turn=PlayerRole.THIEF
+            sim, barriers=sim.barriers | {act.to}, placed=sim.placed + 1, turn=PlayerRole.THIEF
         )
         return (nxt, "thief") if sim.thief_moves >= sim.max_moves else (nxt, None)
     if sim.turn is PlayerRole.COP:

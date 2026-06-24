@@ -262,9 +262,10 @@ is reconciled with any divergence flagged ("mirror-and-flag"). See
 ### Strategies & balance (honest)
 
 The baseline heuristic **Cop** pursues to capture and — only when it can see a distance-2 Thief
-(radius 2) — drops a tactical barrier to herd an edge-pinned Thief; it is deterministic, always
-legal, and never sacrifices a capture or self-traps. The heuristic **Thief** is **mobility-aware**:
-it stays uncapturable, then keeps to open space and clearance from walls.
+(radius 2) — drops a tactical barrier on an **adjacent empty cell** (the lecturer-agreed inter-group
+rule) to herd an edge-pinned Thief; it is deterministic, always legal, and never sacrifices a capture
+or self-traps. The heuristic **Thief** is **mobility-aware**: it stays uncapturable, then keeps to
+open space and clearance from walls.
 
 **LLM and search agents** (`agents.{cop,thief}_strategy`):
 
@@ -286,13 +287,16 @@ fixed grid rule):
   **genuine contest (~54% Cop** over seeds 1000–1029, 98 Cop / 82 Thief). At radius 1 the Cop can't
   see a distance-2 Thief, so barriers stay dormant and it pursues/searches (the blind Cop patrols
   instead of oscillating — the old loop that produced repetitive draws is fixed).
-- **Radius 2 (bonus-match setting) is Cop-favored.** With near-full visibility on the tiny board the
-  Cop barrier-herds a competent evader to a near-certain capture; the
-  [barrier ablation](docs/EXPERIMENTS.md#barrier-ablation-cop-win-rate-with-vs-without-barriers)
-  shows barriers flip the game **0% → 100%** there. This is expected pursuit-evasion, and it is
-  *symmetric* across the role split, so the bonus stays fair.
+- **Radius 2 (bonus-match setting) is Cop-favored — for *competent* agents.** With near-full
+  visibility on the tiny board a strong pursuer corners a strong evader: the **search Cop captures
+  100%** at r2 (over seeds, vs both search and heuristic Thieves). This is expected pursuit-evasion
+  and is *symmetric* across the role split, so the bonus stays fair. (The simple greedy **heuristic**
+  Cop is the exception — it relied on the old *own-cell* barrier; under the agreed *adjacent-cell*
+  rule its greedy pursuit no longer corners a good evader at r2, so the match uses the **search**
+  agents, not the heuristic.)
 
-Full study: [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
+Full study: [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) (the barrier-ablation figures there predate
+the adjacent-cell rule change and describe the old own-cell heuristic).
 
 ## Architecture
 

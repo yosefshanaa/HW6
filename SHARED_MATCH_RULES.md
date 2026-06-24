@@ -29,9 +29,9 @@ runs smoothly. Bonus inter‑group match per Dr. Yoram Segal's spec, §12.
   read from config.
 - **Sub‑game = max 25 moves.** Turn‑based, **thief moves first**, then cop, repeat.
 - Every turn a player **must** either **move one cell** or (cop only) **place a barrier**.
-- **Barrier:** cop places it on its current cell instead of moving; **max 5 per sub‑game**;
-  thief can't place barriers; the cell becomes **impassable for both**; **stepping into a
-  barrier = that player loses.**
+- **Barrier:** cop places it on one of its **8 adjacent empty cells** (lecturer‑confirmed; the cop
+  stays put) instead of moving; **max 5 per sub‑game**; thief can't place barriers; the cell becomes
+  **impassable for both**; **stepping into a barrier = that player loses.**
 - **Cop wins** = lands on the thief's cell. **Thief wins** = survives all 25 moves.
 - **Full series = 6 sub‑games**, role split fixed by the spec:
   - Sub‑games **1–3:** Team A **cop** vs Team B **thief**.
@@ -93,9 +93,9 @@ referee checks. The result is decided on the `action`, not the text.
   fixed**.
 
 ### 2.7 Barrier edge cases
-- **PICK TOGETHER ☐** Cop **can't** place a barrier on the thief's cell or on an existing
-  barrier. After placing, the cop is on that cell for that turn; it's blocked from the next turn
-  on, and the cop moves off it on its following turn.
+- **PICK TOGETHER ☑ (agreed with amireman):** the cop walls **one of its 8 king‑adjacent empty
+  cells** — in‑bounds, not the thief's cell, not an existing barrier. The cop **stays on its own
+  cell** (placing a barrier is its whole turn); the walled cell is impassable for both from then on.
 
 ### 2.8 Move counting
 - **PICK TOGETHER ☐** "25 moves" = **25 thief moves**; the thief wins if it finishes its 25th

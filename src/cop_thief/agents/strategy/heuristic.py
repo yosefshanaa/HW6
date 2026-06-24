@@ -75,11 +75,31 @@ class HeuristicCop(Strategy):
         if cap is not None:
             return Action.move(cap)  # capture wins — never give it up
         if self.wants_barrier(obs, memory, cells, obs.visible_opponent):
-            memory["barriers_placed"] = memory.get("barriers_placed", 0) + 1
-            return Action.barrier(obs.own_cell)
+            bcell = self.barrier_cell(obs)
+            if bcell is not None:
+                memory["barriers_placed"] = memory.get("barriers_placed", 0) + 1
+                return Action.barrier(bcell)
         if not cells:
             return Action.move(obs.own_cell)
         return Action.move(self.best_move(obs, cells, memory))
+
+    def barrier_cell(self, obs: Observation) -> Position | None:
+        """An empty cell king-adjacent to the Cop to wall (closest to the thief), or None.
+
+        Per the inter-group rule the Cop walls an *adjacent* cell (not its own); pick
+        the empty neighbour nearest the thief to cut off its space.
+        """
+        thief = obs.visible_opponent
+        blocked = set(obs.visible_barriers)
+        cand = [
+            n for n in obs.own_cell.neighbors8()
+            if n.in_bounds(obs.grid_size) and n not in blocked and n != thief
+        ]
+        if not cand:
+            return None
+        if thief is not None:
+            return min(cand, key=lambda c: (c.chebyshev(thief), c.row, c.col))
+        return min(cand, key=lambda c: (c.row, c.col))
 
     def capture_move(self, obs: Observation) -> Position | None:
         """The thief's cell when it is visible and one king-step away, else None.

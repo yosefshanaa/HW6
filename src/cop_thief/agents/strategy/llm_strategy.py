@@ -112,8 +112,10 @@ class LlmStrategy(Strategy):
             if capture is not None:
                 return Action.move(capture)  # never miss a capture
             if barrier and f.wants_barrier(obs, memory, cells, obs.visible_opponent):
-                memory["barriers_placed"] = memory.get("barriers_placed", 0) + 1
-                return Action.barrier(obs.own_cell)
+                bcell = f.barrier_cell(obs)
+                if bcell is not None:
+                    memory["barriers_placed"] = memory.get("barriers_placed", 0) + 1
+                    return Action.barrier(bcell)
         best = f.best_move(obs, cells, memory)  # also advances anti-oscillation memory
         if move is not None and move in cells and f.accepts_move(move, obs, cells, memory):
             return Action.move(move)  # model's pick is already a best move — keep it

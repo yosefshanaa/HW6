@@ -34,13 +34,20 @@ def _validate_move(state: GameState, role: PlayerRole, action: Action) -> tuple[
 
 
 def _validate_barrier(state: GameState, role: PlayerRole, action: Action) -> tuple[bool, str]:
+    """A barrier goes on an empty cell king-adjacent to the Cop (it stays put).
+
+    Inter-group agreement (lecturer-confirmed): the Cop walls one of its 8 adjacent
+    cells, not its own cell. Impassable for both; max 5 per sub-game.
+    """
     if role is not PlayerRole.COP:
         return False, "only the Cop may place barriers"
     if state.barriers_placed() >= state.max_barriers:
         return False, "barrier budget exhausted"
     target = action.to
-    if target != state.cop:
-        return False, "barrier must be placed on the Cop's own cell"
+    if not target.in_bounds(state.grid_size):
+        return False, "barrier off-board"
+    if not state.cop.is_king_step_to(target):
+        return False, "barrier must be on a cell adjacent to the Cop"
     if target == state.thief:
         return False, "cannot place a barrier on the Thief's cell"
     if state.is_barrier(target):
