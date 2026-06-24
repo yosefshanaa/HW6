@@ -23,10 +23,10 @@ class TeamSystem:
         self.config = config
         self._strategies: dict[PlayerRole, Strategy] = {
             PlayerRole.COP: make_strategy(
-                PlayerRole.COP, config.get("agents.cop_strategy", "heuristic")
+                PlayerRole.COP, config.get("agents.cop_strategy", "heuristic"), config=config
             ),
             PlayerRole.THIEF: make_strategy(
-                PlayerRole.THIEF, config.get("agents.thief_strategy", "heuristic")
+                PlayerRole.THIEF, config.get("agents.thief_strategy", "heuristic"), config=config
             ),
         }
         self.memory: dict[PlayerRole, dict] = {PlayerRole.COP: {}, PlayerRole.THIEF: {}}

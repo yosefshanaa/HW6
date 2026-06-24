@@ -36,8 +36,10 @@ agents:
   cop_strategy: heuristic   # heuristic | q_table | llm
   thief_strategy: heuristic
 llm:
-  provider: none          # none | openai | anthropic | gemini | ollama
-  model: "TODO: model-id"
+  # Provider for the LLM-driven agents. The API key is read from the environment
+  # (OPENAI_API_KEY), never stored here. agents.*_strategy must be "llm" to use it.
+  provider: openai        # none | openai | anthropic | gemini | ollama
+  model: "gpt-4o-mini"    # cheap/fast for iteration; bump to gpt-4o for real matches
   temperature: 0.7
   per_turn_timeout_seconds: 30
 

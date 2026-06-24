@@ -187,8 +187,18 @@ class HeuristicThief(Strategy):
         return f"Thief slipping toward {decoy.as_list()}."
 
 
-def make_strategy(role: PlayerRole, name: str = "heuristic") -> Strategy:
-    """Factory for a strategy by role and name."""
-    if name != "heuristic":
-        raise ValueError(f"unknown strategy: {name}")
-    return HeuristicCop() if role is PlayerRole.COP else HeuristicThief()
+def make_strategy(role: PlayerRole, name: str = "heuristic", *, config=None) -> Strategy:
+    """Factory for a strategy by role and name.
+
+    ``heuristic`` (default) needs no config; ``llm`` builds the hybrid LLM
+    strategy (provider/model from ``config``) wrapping the heuristic as its
+    legal-guard fallback.
+    """
+    base = HeuristicCop() if role is PlayerRole.COP else HeuristicThief()
+    if name == "heuristic":
+        return base
+    if name == "llm":
+        from cop_thief.agents.strategy.llm_factory import build_llm_strategy
+
+        return build_llm_strategy(role, config, fallback=base)
+    raise ValueError(f"unknown strategy: {name}")

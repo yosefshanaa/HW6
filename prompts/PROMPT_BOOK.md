@@ -78,3 +78,26 @@ calls route through the API Gatekeeper. Prompts are logged here when run.
   tokens out of band with the partner team; play sub-games 1–3 (A-Cop/B-Thief) and 4–6
   (B-Cop/A-Thief); reconcile results and email identical §9.2 JSON with `mutual_agreement: true`."
 - **Blocker:** needs a cloud provider + credentials and a real partner team. Not run here.
+
+## 7. LLM-driven agents (OpenAI, hybrid LLM + heuristic guard)
+
+- **Goal:** Make the Cop & Thief reason over the natural-language channel with a real LLM and play
+  to win, without ever stalling or making an illegal move.
+- **Prompt gist (build):** "Wire a provider-agnostic OpenAI responder into the `LlmClient` seam
+  (key from `OPENAI_API_KEY`, never config). Add a hybrid `LlmStrategy`: one chat completion per
+  turn returns JSON `{move:[r,c], barrier?, say}`; a legal-guard clamps the move to a legal cell and
+  the existing heuristic is the fallback on any error/garbage/illegal move; keep the model's `say`
+  (a bluff) even when the move falls back. Config-driven (`llm.provider/model`, `agents.*_strategy:
+  llm`); `openai` is an optional extra; unit-test the guard with a stub client (no network)."
+- **Agent system prompts (runtime — see `agents/strategy/llm_prompts.py`):**
+  - **Cop:** "You are the COP… you WIN by moving onto the THIEF's exact cell. Move one king-step or
+    place a BARRIER (limited budget). You see the thief only within your vision radius; the thief's
+    messages MAY BE LIES. Capture fast: cut distance, herd against edges, spend barriers only when
+    they trap it. You may bluff. Pick a move from the legal list. JSON only."
+  - **Thief:** "You are the THIEF… you WIN by surviving the move limit. Move one king-step; no
+    barriers. Stay uncapturable (distance ≥2), prefer open cells with many escape routes, avoid
+    corners/edges/barriers. BLUFF about your direction to mislead the cop. Pick a move from the legal
+    list. JSON only."
+- **Output:** `agents/providers.py`, `agents/strategy/llm_prompts.py`, `agents/strategy/llm_strategy.py`,
+  `agents/strategy/llm_factory.py`; `make_strategy(..., config=...)` builds it when strategy=`llm`;
+  8 guard tests green, ruff clean.
