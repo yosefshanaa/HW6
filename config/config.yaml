@@ -49,8 +49,8 @@ mcp:
   cop_port: 8001
   thief_host: "127.0.0.1"
   thief_port: 8002
-  cop_url: "TODO: https://cop-mcp.example.run"
-  thief_url: "TODO: https://thief-mcp.example.run"
+  cop_url: "https://cop-thief-cop-1035205205472.us-central1.run.app/mcp"
+  thief_url: "https://cop-thief-thief-1035205205472.us-central1.run.app/mcp"
 
 # --- Auth (tokens come from env, never here) ---
 auth:
@@ -80,8 +80,8 @@ match:
   github_repo_group_2: "TODO: https://github.com/partner/HW6"
   students_group_1: []                 # TODO: [{name, id}, ...]
   students_group_2: []
-  mcp_url_group_1_cop: "TODO: https://g1-cop-mcp.example.run"
-  mcp_url_group_1_thief: "TODO: https://g1-thief-mcp.example.run"
+  mcp_url_group_1_cop: "https://cop-thief-cop-1035205205472.us-central1.run.app/mcp"
+  mcp_url_group_1_thief: "https://cop-thief-thief-1035205205472.us-central1.run.app/mcp"
   mcp_url_group_2_cop: "TODO: https://g2-cop-mcp.example.run"
   mcp_url_group_2_thief: "TODO: https://g2-thief-mcp.example.run"
 
