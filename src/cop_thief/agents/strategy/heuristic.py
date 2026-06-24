@@ -4,12 +4,22 @@ from __future__ import annotations
 
 import re
 
-from cop_thief.agents.strategy.base import Strategy, grid_center, legal_neighbor_cells
+from cop_thief.agents.strategy.base import (
+    Strategy,
+    grid_center,
+    legal_neighbor_cells,
+    mobility,
+    on_edge,
+)
 from cop_thief.constants import ActionType
 from cop_thief.domain.action import Action
 from cop_thief.domain.observation import Observation
 from cop_thief.domain.position import Position
 from cop_thief.domain.roles import PlayerRole
+
+# Re-exported under the historical private names used throughout this module.
+_mobility = mobility
+_on_edge = on_edge
 
 
 def _reference(obs: Observation, memory: dict) -> Position | None:
@@ -17,19 +27,6 @@ def _reference(obs: Observation, memory: dict) -> Position | None:
     if obs.visible_opponent is not None:
         return obs.visible_opponent
     return memory.get("last_known_opponent")
-
-
-def _on_edge(pos: Position, grid_size: list[int]) -> bool:
-    """Whether ``pos`` sits on a board edge (row/col is first or last)."""
-    return pos.row in (0, grid_size[0] - 1) or pos.col in (0, grid_size[1] - 1)
-
-
-def _mobility(cell: Position, obs: Observation) -> int:
-    """Count of legal king-moves out of ``cell`` (open space = more escape routes)."""
-    blocked = set(obs.visible_barriers)
-    return sum(
-        1 for n in cell.neighbors8() if n.in_bounds(obs.grid_size) and n not in blocked
-    )
 
 
 def _nearest_barrier_dist(cell: Position, obs: Observation) -> int:
@@ -74,15 +71,53 @@ class HeuristicCop(Strategy):
 
     def decide(self, obs: Observation, memory: dict) -> Action:
         cells = legal_neighbor_cells(obs)
-        thief = obs.visible_opponent
-        if thief is not None and obs.own_cell.is_king_step_to(thief):
-            return Action.move(thief)  # capture wins — never give it up
-        if self._should_barrier(obs, memory, cells, thief):
+        cap = self.capture_move(obs)
+        if cap is not None:
+            return Action.move(cap)  # capture wins — never give it up
+        if self.wants_barrier(obs, memory, cells, obs.visible_opponent):
             memory["barriers_placed"] = memory.get("barriers_placed", 0) + 1
             return Action.barrier(obs.own_cell)
         if not cells:
             return Action.move(obs.own_cell)
-        return Action.move(self._select(obs, cells, memory))
+        return Action.move(self.best_move(obs, cells, memory))
+
+    def capture_move(self, obs: Observation) -> Position | None:
+        """The thief's cell when it is visible and one king-step away, else None.
+
+        The single most important move: a Cop that can capture this turn always
+        must. The LLM guard calls this to *force* a capture the model might miss.
+        """
+        thief = obs.visible_opponent
+        if thief is not None and obs.own_cell.is_king_step_to(thief):
+            return thief
+        return None
+
+    def pursuit_ref(self, obs: Observation, memory: dict) -> Position:
+        """Cell the Cop is closing on: the thief if seen, else last-known, else centre."""
+        return (
+            obs.visible_opponent
+            or memory.get("last_known_opponent")
+            or grid_center(obs.grid_size)
+        )
+
+    def accepts_move(
+        self, target: Position, obs: Observation, cells: list[Position], memory: dict
+    ) -> bool:
+        """Whether ``target`` is distance-optimal (a strong pursuit move, not just legal).
+
+        The LLM guard keeps the model's chosen cell when it ties the closest legal
+        cell to the pursuit reference, and overrides it otherwise — so the model
+        never throws away a tempo by stepping the wrong way.
+        """
+        ref = self.pursuit_ref(obs, memory)
+        best_d = min(c.chebyshev(ref) for c in cells)
+        return target.chebyshev(ref) == best_d
+
+    def wants_barrier(
+        self, obs: Observation, memory: dict, cells: list[Position], thief: Position | None
+    ) -> bool:
+        """Public name for the herding-barrier gate (see :meth:`_should_barrier`)."""
+        return self._should_barrier(obs, memory, cells, thief)
 
     def _should_barrier(
         self, obs: Observation, memory: dict, cells: list[Position], thief: Position | None
@@ -113,7 +148,8 @@ class HeuristicCop(Strategy):
             return False
         return len(cells) >= 3
 
-    def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
+    def best_move(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
+        """The Cop's strongest legal step (also updates anti-oscillation tracking)."""
         prev = _track(obs, memory)
         if obs.visible_opponent is not None:
             # Fresh sighting: pursue exactly as before (unchanged pursuit strength).
@@ -128,6 +164,9 @@ class HeuristicCop(Strategy):
         recent.append(obs.own_cell)
         del recent[:-4]
         return pick
+
+    def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
+        return self.best_move(obs, cells, memory)
 
     def compose_message(self, obs: Observation, action: Action, memory: dict) -> str:
         if action.type is ActionType.BARRIER:
@@ -155,11 +194,48 @@ class HeuristicThief(Strategy):
     def __init__(self) -> None:
         super().__init__(PlayerRole.THIEF)
 
-    def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
+    def evasion_ref(self, obs: Observation, memory: dict) -> Position | None:
+        """The cop the Thief is dodging: sighting > last-known > untrusted message hint."""
+        return _reference(obs, memory) or _message_hint(memory)
+
+    def accepts_move(
+        self, target: Position, obs: Observation, cells: list[Position], memory: dict
+    ) -> bool:
+        """Whether ``target`` is a strong evasion (safe first, then open and clear).
+
+        ``min(chebyshev, 2)`` makes *staying uncapturable* (gap >=2, so the Cop
+        cannot land on the Thief next turn) the top tie-break: when any safe cell
+        exists, a cell the Cop could capture next turn is never accepted. The LLM
+        guard uses this to veto the model walking into the Cop, then prefers the
+        most escape routes and clearance from barriers — keeping the model's own
+        pick whenever it is already among the best.
+        """
+        ref = self.evasion_ref(obs, memory)
+        if ref is None:
+            return _mobility(target, obs) == max(_mobility(c, obs) for c in cells)
+        # Match the meaningful components of best_move's key (all but the arbitrary
+        # row/col tie-break): safety, escape routes, barrier clearance, raw distance,
+        # and centrality — so the guard overrides edge/corner-hugging the model favours
+        # even when it ties on safety+mobility, keeping the Thief at heuristic strength.
+        center = grid_center(obs.grid_size)
+
+        def key(c: Position) -> tuple[int, int, int, int, int]:
+            return (
+                min(c.chebyshev(ref), 2),
+                _mobility(c, obs),
+                _nearest_barrier_dist(c, obs),
+                c.chebyshev(ref),
+                -c.chebyshev(center),
+            )
+
+        return key(target) == max(key(c) for c in cells)
+
+    def best_move(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
+        """The Thief's strongest legal step (also updates anti-oscillation tracking)."""
         prev = _track(obs, memory)
         # Belief priority: live sighting > remembered last position > a coarse,
         # untrusted hint parsed from the Cop's last message (fog fallback only).
-        ref = _reference(obs, memory) or _message_hint(memory)
+        ref = self.evasion_ref(obs, memory)
         center = grid_center(obs.grid_size)
         if ref is None:
             # Truly blind (no sighting, memory, or message): keep escape routes
@@ -181,6 +257,9 @@ class HeuristicThief(Strategy):
             ),
         )
 
+    def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
+        return self.best_move(obs, cells, memory)
+
     def compose_message(self, obs: Observation, action: Action, memory: dict) -> str:
         # Bluff: name a plausible but different corner to mislead the Cop.
         decoy = Position(0, 0) if action.to.row > 0 else Position(obs.grid_size[0] - 1, 0)
@@ -191,8 +270,10 @@ def make_strategy(role: PlayerRole, name: str = "heuristic", *, config=None) -> 
     """Factory for a strategy by role and name.
 
     ``heuristic`` (default) needs no config; ``llm`` builds the hybrid LLM
-    strategy (provider/model from ``config``) wrapping the heuristic as its
-    legal-guard fallback.
+    strategy (LLM move + heuristic legal-guard); ``search`` drives the move with a
+    bounded minimax over the real rules (heuristic under fog) and a heuristic
+    bluff; ``search_llm`` is ``search`` with the bluff written by the LLM. All but
+    ``heuristic`` need ``config``; the heuristic is always the fog/legal fallback.
     """
     base = HeuristicCop() if role is PlayerRole.COP else HeuristicThief()
     if name == "heuristic":
@@ -201,4 +282,10 @@ def make_strategy(role: PlayerRole, name: str = "heuristic", *, config=None) -> 
         from cop_thief.agents.strategy.llm_factory import build_llm_strategy
 
         return build_llm_strategy(role, config, fallback=base)
+    if name in ("search", "search_llm"):
+        from cop_thief.agents.strategy.llm_factory import build_search_strategy
+
+        return build_search_strategy(
+            role, config, fallback=base, with_llm_message=(name == "search_llm")
+        )
     raise ValueError(f"unknown strategy: {name}")

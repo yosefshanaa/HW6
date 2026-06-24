@@ -1,10 +1,20 @@
-"""Hybrid LLM strategy: the model drives, the heuristic guards (PRD_agent_strategy).
+"""Hybrid LLM strategy: the model drives, a search-backed guard keeps it strong.
 
-One LLM call per turn yields both the move and a (bluff-capable) message. A
-legal-guard clamps the move to a legal cell; if the model errors, returns
-unparseable output, or proposes an illegal move, the wrapped heuristic supplies
-a guaranteed-legal move so the game never stalls. The model's message is kept
-even when the move falls back, so the natural-language channel stays live.
+One LLM call per turn yields both the move and a (bluff-capable) message. The
+guard then does a light, one-ply search via the wrapped heuristic so the move is
+*strong*, not merely legal:
+
+* Cop — a capture that is available this turn is always taken (the model can
+  never miss it); a herding barrier is placed only when the heuristic's gate
+  agrees; otherwise the model's cell is kept when it is distance-optimal and
+  replaced with the closest legal cell when it is not.
+* Thief — the model's cell is kept when it is a best evasion (uncapturable next
+  turn, most escape routes); a cell the Cop could capture next turn is vetoed in
+  favour of a safe one whenever a safe one exists.
+
+If the model errors, returns unparseable output, or omits a move, the heuristic
+supplies the move. The model's message is always kept (even when its move is
+overridden) so the natural-language / bluff channel stays live.
 """
 
 from __future__ import annotations
@@ -58,41 +68,56 @@ class LlmStrategy(Strategy):
         self._system = system_prompt(role)
 
     def decide(self, obs: Observation, memory: dict) -> Action:
-        """Ask the model; clamp to a legal action, else use the heuristic guard."""
+        """Ask the model, then return a strong, legal action via the search guard."""
         cells = legal_neighbor_cells(obs)
-        action: Action | None = None
+        move: Position | None = None
+        barrier = False
         say: str | None = None
         try:
             raw = self._client.complete(
                 build_user_prompt(self.role, obs, memory), system=self._system
             )
-            action, say = self._parse(raw, obs, cells, memory)
+            move, barrier, say = self._parse(raw)
         except Exception as exc:  # noqa: BLE001 - any failure must not stall the turn
             _log.warning("LLM turn failed (%s); using heuristic guard", exc)
-        if action is None:
-            action = self._fallback.decide(obs, memory)
-            if say is None:
-                say = self._fallback.compose_message(obs, action, memory)
+        action = self._guard(move, barrier, obs, cells, memory)
+        if say is None:
+            say = self._fallback.compose_message(obs, action, memory)
         memory["_llm_say"] = say
         return action
 
-    def _parse(
-        self, raw: str, obs: Observation, cells: list[Position], memory: dict
-    ) -> tuple[Action | None, str | None]:
-        """Turn the model's JSON into a legal action; None move -> heuristic guard."""
+    def _parse(self, raw: str) -> tuple[Position | None, bool, str | None]:
+        """Pull the proposed move, barrier flag, and message out of the model's JSON."""
         data = _extract_json(raw)
         if data is None:
-            return None, None
+            return None, False, None
         say = (str(data.get("say") or "")).strip() or None
-        if self.role is PlayerRole.COP and data.get("barrier"):
-            left = memory.get("max_barriers", 5) - memory.get("barriers_placed", 0)
-            if left > 0 and obs.own_cell not in obs.visible_barriers:
+        barrier = self.role is PlayerRole.COP and bool(data.get("barrier"))
+        return _to_pos(data.get("move")), barrier, say
+
+    def _guard(
+        self,
+        move: Position | None,
+        barrier: bool,
+        obs: Observation,
+        cells: list[Position],
+        memory: dict,
+    ) -> Action:
+        """Light one-ply search: keep the model's move when strong, else override."""
+        f = self._fallback
+        if not cells:
+            return Action.move(obs.own_cell)  # boxed in; referee replaces it
+        if self.role is PlayerRole.COP:
+            capture = f.capture_move(obs)
+            if capture is not None:
+                return Action.move(capture)  # never miss a capture
+            if barrier and f.wants_barrier(obs, memory, cells, obs.visible_opponent):
                 memory["barriers_placed"] = memory.get("barriers_placed", 0) + 1
-                return Action.barrier(obs.own_cell), say
-        target = _to_pos(data.get("move"))
-        if target is not None and target in cells:
-            return Action.move(target), say
-        return None, say  # illegal/garbage move: keep the message, guard the move
+                return Action.barrier(obs.own_cell)
+        best = f.best_move(obs, cells, memory)  # also advances anti-oscillation memory
+        if move is not None and move in cells and f.accepts_move(move, obs, cells, memory):
+            return Action.move(move)  # model's pick is already a best move — keep it
+        return Action.move(best)
 
     def _select(self, obs: Observation, cells: list[Position], memory: dict) -> Position:
         """ABC hook (unused on the LLM path); defer to the heuristic guard."""

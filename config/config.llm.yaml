@@ -1,5 +1,7 @@
-# Cop & Thief — main game/system configuration (versioned).
-# All tunable values live here, never hard-coded in source (PRD §12, ADR-006).
+# Cop & Thief — RUN-ONLY LLM config (derived from config.yaml).
+# Identical to config.yaml except agents.{cop,thief}_strategy = llm, so a full
+# series runs LLM-vs-LLM without touching the committed heuristic default.
+# Use: uv run cop-thief --config config/config.llm.yaml
 version: "1.00"
 
 # --- Board & game rules ---
@@ -33,13 +35,8 @@ fixed_start:              # used only when start_mode == "fixed"
 
 # --- Agents / LLM ---
 agents:
-  cop_strategy: heuristic   # heuristic | q_table | llm | search | search_llm
-  thief_strategy: heuristic
-# Bounded minimax over the real rules drives the move for the search/search_llm
-# agents (Cop maximizes capture + herds with barriers, Thief maximizes survival);
-# the heuristic takes over under fog. Depth is plies of look-ahead.
-search:
-  depth: 6                  # 6 ~16ms/move, 8 ~110ms/move on 5x5 (both < per-turn timeout)
+  cop_strategy: llm         # heuristic | q_table | llm
+  thief_strategy: llm
 llm:
   # Provider for the LLM-driven agents. The API key is read from the environment
   # (OPENAI_API_KEY), never stored here. agents.*_strategy must be "llm" to use it.

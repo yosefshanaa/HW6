@@ -89,6 +89,61 @@ def test_client_exception_never_stalls_the_turn():
     assert action.to in legal_neighbor_cells(o)
 
 
+def test_cop_guard_forces_available_capture_over_model_move():
+    # Thief adjacent: the Cop must capture even if the model proposes elsewhere.
+    o = obs(PlayerRole.COP, Position(2, 2), opponent=Position(2, 3))
+    strat = _strat(PlayerRole.COP, json.dumps({"move": [1, 1], "say": "circling"}))
+    action = strat.decide(o, {})
+    assert action.type is ActionType.MOVE
+    assert action.to == Position(2, 3)  # capture forced
+
+
+def test_cop_guard_forces_capture_even_when_model_wants_a_barrier():
+    o = obs(PlayerRole.COP, Position(2, 2), opponent=Position(3, 3))
+    strat = _strat(PlayerRole.COP, json.dumps({"barrier": True, "say": "walling"}))
+    action = strat.decide(o, {"max_barriers": 5})
+    assert action.type is ActionType.MOVE
+    assert action.to == Position(3, 3)  # capture beats a barrier
+
+
+def test_cop_guard_overrides_a_move_that_does_not_close_distance():
+    # Thief two away; the model proposes a step that increases distance.
+    o = obs(PlayerRole.COP, Position(2, 2), opponent=Position(4, 4))
+    strat = _strat(PlayerRole.COP, json.dumps({"move": [1, 1], "say": "this way!"}))
+    mem: dict = {}
+    action = strat.decide(o, mem)
+    assert action.to == Position(3, 3)  # closest legal cell to the thief
+    assert strat.compose_message(o, action, mem) == "this way!"  # message kept
+
+
+def test_thief_guard_vetoes_a_capturable_move_but_keeps_the_message():
+    # Cop two away; the model proposes stepping to a cell adjacent to the cop.
+    o = obs(PlayerRole.THIEF, Position(2, 2), opponent=Position(0, 0))
+    strat = _strat(PlayerRole.THIEF, json.dumps({"move": [1, 1], "say": "going to [4,4]"}))
+    mem: dict = {}
+    action = strat.decide(o, mem)
+    assert action.to.chebyshev(Position(0, 0)) >= 2  # stays uncapturable next turn
+    assert strat.compose_message(o, action, mem) == "going to [4,4]"  # bluff kept
+
+
+def test_thief_guard_keeps_a_safe_open_model_move():
+    o = obs(PlayerRole.THIEF, Position(2, 2), opponent=Position(0, 0))
+    strat = _strat(PlayerRole.THIEF, json.dumps({"move": [3, 3], "say": "left!"}))
+    action = strat.decide(o, {})
+    assert action.to == Position(3, 3)  # safe + most escape routes -> model's pick stands
+
+
+def test_thief_guard_overrides_a_safe_but_too_close_move():
+    # (2,1) is safe (dist 2 from the cop) and fully open, but other safe cells are
+    # farther; the search guard maximizes distance, not just safety, so it overrides.
+    o = obs(PlayerRole.THIEF, Position(2, 2), opponent=Position(0, 0))
+    strat = _strat(PlayerRole.THIEF, json.dumps({"move": [2, 1], "say": "sidestep"}))
+    mem: dict = {}
+    action = strat.decide(o, mem)
+    assert action.to.chebyshev(Position(0, 0)) >= 3  # pushed to a farther cell
+    assert strat.compose_message(o, action, mem) == "sidestep"  # message still kept
+
+
 def test_extract_json_tolerates_surrounding_prose():
     assert _extract_json('here you go: {"move": [1, 2]} thanks') == {"move": [1, 2]}
     assert _extract_json("totally not json") is None

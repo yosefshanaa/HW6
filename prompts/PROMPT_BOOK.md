@@ -101,3 +101,47 @@ calls route through the API Gatekeeper. Prompts are logged here when run.
 - **Output:** `agents/providers.py`, `agents/strategy/llm_prompts.py`, `agents/strategy/llm_strategy.py`,
   `agents/strategy/llm_factory.py`; `make_strategy(..., config=...)` builds it when strategy=`llm`;
   8 guard tests green, ruff clean.
+
+## 7b. Tuning the LLM agents to win (search-backed guard + sharper prompts)
+
+- **Goal:** A first live LLM-vs-LLM series (`config/config.llm.yaml`, 5×5/r1, seed 1234) showed the
+  Cop winning 6–0: the Thief kept fleeing into edges and stepping onto cells the Cop could capture
+  next turn. Make both agents play strong moves, not merely legal ones.
+- **Prompt gist:** "Replace the legal-only clamp with a light one-ply search in the guard, reusing
+  the heuristic as the evaluator. Cop: always take an available capture; place a barrier only when
+  the heuristic's herding gate agrees; otherwise keep the model's cell only when it ties the closest
+  legal cell to the opponent. Thief: keep the model's cell only when it is a best evasion
+  (uncapturable next turn = Chebyshev ≥2, then most escape routes); veto a capturable cell whenever a
+  safe one exists. Always keep the model's `say` even when the move is overridden. Sharpen the system
+  prompts (capture-now / stay-uncapturable tactics) and annotate each legal cell with `dist`
+  (Chebyshev to opponent) and `esc` (escape routes) plus an `edge` flag so the model reasons toward
+  the cell the guard would accept."
+- **Output:** `heuristic.py` exposes `capture_move` / `wants_barrier` / `best_move` / `accepts_move`
+  (shared `mobility`/`on_edge` moved to `base.py`); `llm_strategy.py` `_guard`; richer
+  `llm_prompts.py`; +6 guard tests (14 LLM-strategy tests green). The model still drives the move
+  whenever it is already a best move, and always owns the bluff channel.
+
+## 7c. Match-ready agents: minimax move + LLM bluff (`search_llm`)
+
+- **Goal:** Maximize strength for the inter-team match (our Thief vs their Cop, our Cop vs their
+  Thief) at the agreed r2/5×5, while never emitting an illegal action (an illegal move forfeits the
+  sub-game) and keeping the Cop's barrier capability. Decision made with the user: the MOVE comes
+  from a deterministic search, the LLM only writes the bluff (so a flaky API can never affect the
+  move or stall a turn).
+- **Prompt gist:** "Add a bounded alpha-beta minimax over the *real* rules (`agents/strategy/
+  search.py`): Cop maximizes (capture fast, herd, may wall its own cell within budget), Thief
+  minimizes (maximize survival time). Mirror the engine exactly (thief-first, either player landing
+  on the other = Cop win, barrier consumes the Cop's turn, Thief wins at `thief_moves≥max_moves`);
+  only ever generate legal actions. Use search when the opponent is visible, the belief heuristic
+  under fog. Wrap it in `SearchStrategy` (move) + an injected message-only LLM bluff
+  (`build_message_prompt`, heuristic fallback). Register `search` and `search_llm`; add
+  `config/config.match.yaml` (search_llm, r2, depth 8)."
+- **Bluff prompt (message-only):** "You are the {role} at {cell}; opponent {belief}. You have
+  already decided to {move/ barrier} — do NOT reveal it. Write ONE short line (<12 words) that bluffs:
+  name a direction/cell you are NOT going to. JSON only: {\"say\":\"...\"}."
+- **Result (deterministic eval, r2, 12 seeds × 6 = 72 sub-games each):** heuristic-vs-heuristic =
+  Cop 72/0 (r2 is ~100% Cop). Our **search Cop** captures every game in ~3.8 moves (vs heuristic's
+  8.0). Our **search Thief survives a heuristic Cop 57%** of games (heuristic Thief: 0%). Search vs
+  search = Cop 72/0 (a perfect Cop wins at r2). So the match hinges on our Thief out-surviving their
+  Cop — the edge we maximized. `search.py` + `search_strategy.py` + 6 search tests (incl. an
+  "always legal" property test over random states); 160 tests green, ruff clean.
