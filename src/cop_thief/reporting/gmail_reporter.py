@@ -62,7 +62,18 @@ class GmailReporter:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     self.credentials_file, self.scopes
                 )
-                creds = flow.run_local_server(port=0)
+                # WSL-friendly: don't auto-open a browser (that often fails under
+                # WSL). Print the URL to open manually; the redirect still returns
+                # to the local server (WSL2 forwards localhost to Windows).
+                creds = flow.run_local_server(
+                    port=0,
+                    open_browser=False,
+                    authorization_prompt_message=(
+                        "\n[Gmail auth] Open this URL in your browser and approve "
+                        "(one time):\n  {url}\n"
+                    ),
+                    success_message="Gmail authorized — you can close this tab.",
+                )
             Path(self.token_file).write_text(creds.to_json(), encoding="utf-8")
 
         message = EmailMessage()
