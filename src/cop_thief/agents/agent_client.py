@@ -10,11 +10,32 @@ match machinery is transport-agnostic.
 
 from __future__ import annotations
 
+import contextlib
+import time
 from abc import ABC, abstractmethod
 from typing import Any
 
 from cop_thief.engine.referee import Referee
 from cop_thief.mcp import tools
+from cop_thief.shared.logging_setup import get_logger
+
+_log = get_logger("agent_client")
+
+# Connection-level failures worth a reconnect+retry (a stale session, a dropped
+# keepalive stream, or a Cloud Run cold start). NOT HTTP 4xx/5xx — those surface.
+_RETRYABLE: tuple[type[BaseException], ...] = (ConnectionError, TimeoutError, OSError)
+try:  # httpx ships with the mcp extra
+    import httpx
+
+    _RETRYABLE = (*_RETRYABLE, httpx.TransportError)  # Connect/Read/Pool timeouts, protocol errors
+except ImportError:  # pragma: no cover
+    pass
+try:
+    import anyio
+
+    _RETRYABLE = (*_RETRYABLE, anyio.BrokenResourceError)
+except ImportError:  # pragma: no cover
+    pass
 
 
 class Transport(ABC):
@@ -71,43 +92,73 @@ class HttpTransport(Transport):
     """Calls a remote MCP server over HTTP (bearer auth) via the FastMCP client.
 
     ``target`` is the server URL for a real match, or a FastMCP app object for
-    in-memory tests (no socket). A persistent event loop keeps one client session
-    open across the sub-game's turns. ``fastmcp`` is imported lazily (the optional
-    ``mcp`` extra), so the core package never requires it.
+    in-memory tests (no socket). Resilient by design: a dropped session, stale
+    keepalive, or Cloud Run cold start triggers a reconnect + retry with backoff
+    instead of crashing (the referee state is server-side global, so a new session
+    sees the same game). ``fastmcp`` is imported lazily (the optional ``mcp`` extra).
     """
 
-    def __init__(self, target: Any, *, token: str | None = None, timeout: float = 30.0) -> None:
-        import asyncio
+    _RETRIES = 4          # reconnect+retry attempts on a connection-level failure
+    _BACKOFF = 2.5        # seconds between attempts (long enough to ride a cold start)
 
-        from fastmcp import Client
+    def __init__(self, target: Any, *, token: str | None = None, timeout: float = 60.0) -> None:
+        import asyncio
 
         self._loop = asyncio.new_event_loop()
         if isinstance(target, str):
-            # Strip a trailing slash: FastMCP serves at ``/mcp`` and a request to
-            # ``/mcp/`` 307-redirects, on which httpx drops the Authorization header
-            # → a spurious 401. Normalising here makes either URL form work.
+            # Strip a trailing slash: FastMCP serves at ``/mcp`` and ``/mcp/``
+            # 307-redirects, on which httpx drops the auth header → a spurious 401.
             target = target.rstrip("/")
-        if isinstance(target, str) and token:
+        self._target = target
+        self._token = token
+        self._timeout = timeout
+        self._client: Any = None
+        self._open()
+
+    def _build_client(self) -> Any:
+        from fastmcp import Client
+
+        if isinstance(self._target, str) and self._token:
             from fastmcp.client.auth import BearerAuth
 
-            client = Client(target, auth=BearerAuth(token), timeout=timeout)
-        else:
-            client = Client(target, timeout=timeout)
-        self._client = client
-        self._loop.run_until_complete(client.__aenter__())
+            return Client(self._target, auth=BearerAuth(self._token), timeout=self._timeout)
+        return Client(self._target, timeout=self._timeout)
+
+    def _open(self) -> None:
+        self._client = self._build_client()
+        self._loop.run_until_complete(self._client.__aenter__())
+
+    def _reconnect(self) -> None:
+        with contextlib.suppress(Exception):  # the old session is already broken
+            self._loop.run_until_complete(self._client.__aexit__(None, None, None))
+        self._open()
 
     def call(self, tool: str, **kwargs: Any) -> dict[str, Any]:
         keys = _HTTP_TOOL_ARGS.get(tool)
         if keys is None:
             raise ValueError(f"unknown tool: {tool}")
         args = {k: kwargs[k] for k in keys}
-        result = self._loop.run_until_complete(self._client.call_tool(tool, args))
-        return result.data
+        last: BaseException | None = None
+        for attempt in range(self._RETRIES):
+            try:
+                return self._loop.run_until_complete(self._client.call_tool(tool, args)).data
+            except _RETRYABLE as exc:
+                last = exc
+                _log.warning("MCP %s failed (%s); reconnect+retry %d/%d",
+                             tool, type(exc).__name__, attempt + 1, self._RETRIES)
+                if attempt < self._RETRIES - 1:
+                    time.sleep(self._BACKOFF)
+                    try:
+                        self._reconnect()
+                    except Exception as rexc:  # noqa: BLE001 - keep the original error if reconnect fails
+                        last = rexc
+        raise last  # type: ignore[misc]
 
     def close(self) -> None:
-        """Close the client session and its event loop (call after the sub-game)."""
+        """Close the client session and its event loop (call after the match)."""
         try:
-            self._loop.run_until_complete(self._client.__aexit__(None, None, None))
+            with contextlib.suppress(Exception):
+                self._loop.run_until_complete(self._client.__aexit__(None, None, None))
         finally:
             self._loop.close()
 
