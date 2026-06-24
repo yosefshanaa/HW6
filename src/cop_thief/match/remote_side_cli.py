@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 
 from cop_thief.agents.agent_client import AgentClient, HttpTransport
 from cop_thief.match.remote_side import RemoteSide
@@ -38,6 +39,8 @@ def main() -> None:
     p.add_argument("--group", default="group_1", choices=["group_1", "group_2"],
                    help="which side we are (group_1 = us, the default)")
     p.add_argument("--results-dir", default=None)
+    p.add_argument("--send", action="store_true",
+                   help="email the §9.2 report via Gmail at the end (needs credentials.json)")
     args = p.parse_args()
 
     setup_logging()
@@ -85,7 +88,8 @@ def main() -> None:
         for t in transports.values():
             t.close()
 
-    report = CopThiefSDK(config).build_bonus_report(side.outcome())
+    sdk = CopThiefSDK(config)
+    report = sdk.build_bonus_report(side.outcome())
     (side.series_dir / "bonus_report.json").write_text(
         json.dumps(report, indent=2), encoding="utf-8"
     )
@@ -93,6 +97,17 @@ def main() -> None:
         print(f"  sub-game {r.index}: winner={r.winner.value} moves={r.moves_played} "
               f"cop={r.cop_score} thief={r.thief_score}", file=sys.stderr)
     print(f"  totals: {report['totals_by_group']} | logs: {side.series_dir}", file=sys.stderr)
+
+    if args.send:
+        creds = config.get("report.credentials_file", "credentials.json")
+        if Path(creds).exists():
+            msg_id = sdk.send_report(report, sdk.gmail_reporter())
+            print(f"  emailed §9.2 report to {config.get('report.recipient')} (id={msg_id})",
+                  file=sys.stderr)
+        else:
+            print(f"  --send set but {creds} not found; report written but NOT emailed "
+                  "(see docs/PRD_gmail_reporting.md to set up OAuth)", file=sys.stderr)
+
     print(json.dumps(report))
 
 
