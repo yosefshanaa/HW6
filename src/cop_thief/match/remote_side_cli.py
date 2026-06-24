@@ -41,11 +41,15 @@ def main() -> None:
     p.add_argument("--results-dir", default=None)
     p.add_argument("--send", action="store_true",
                    help="email the §9.2 report via Gmail at the end (needs credentials.json)")
+    p.add_argument("--to", default=None,
+                   help="override the report recipient (e.g. a test address); default = config")
     args = p.parse_args()
 
     setup_logging()
     log = get_logger("cop_thief.play_side")
     config = load_config(args.config)
+    if args.to:
+        config.data["report"]["recipient"] = args.to
     g1, g2 = config.get("match.group_1"), config.get("match.group_2")
     my_group = g1 if args.group == "group_1" else g2
 

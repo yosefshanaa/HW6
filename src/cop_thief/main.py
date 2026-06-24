@@ -28,11 +28,18 @@ def main() -> None:
         "--send", action="store_true",
         help="email the JSON report via the Gmail API (requires credentials.json)",
     )
+    parser.add_argument(
+        "--to", default=None,
+        help="override the report recipient (e.g. for a test send); default = config report.recipient",
+    )
     args = parser.parse_args()
 
     setup_logging()
     log = get_logger("cop_thief")
     sdk = CopThiefSDK(load_config(args.config))
+    if args.to:
+        sdk.config.data["report"]["recipient"] = args.to
+        log.info("recipient overridden to %s", args.to)
     log.info("Cop & Thief v%s — starting series", sdk.version())
 
     reporter = _make_reporter(sdk, log) if args.send else None
