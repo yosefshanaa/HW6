@@ -42,3 +42,6 @@ results/*/
 .DS_Store
 Thumbs.db
 .claude/settings.local.json
+
+# iPhone photo originals (committed as downsized JPGs in assets/)
+*.HEIC

@@ -217,6 +217,19 @@ eight-tool contract incl. `reset` + `get_messages`). Then each team emails **ide
 with `mutual_agreement: true`. Our `match:`/`mcp:` fields are filled in
 [`config/config.match.yaml`](config/config.match.yaml); the `group_2` fields stay `TODO:` until exchanged.
 
+### Live two-team match — ahk-yosi vs amireman
+
+Real-time photos from the cross-team session: our ThinkPad (**ahk-yosi**, left) and the partner team's
+ASUS (**amireman**, right) running the live match over the deployed MCP servers.
+
+<p align="center">
+  <img src="assets/match_live_1.jpg" width="80%" alt="ahk-yosi (left) and amireman (right) running the live cross-team match"><br>
+  <img src="assets/match_live_4.jpg" width="40%" alt="Close-up of our live match session">
+</p>
+
+> The partner's screen is **redacted** in these photos — the live bearer tokens were on it during the
+> token exchange, and those are never published.
+
 ## Expected outputs
 
 Each headless/GUI run writes, under `results/<timestamp>/`:
