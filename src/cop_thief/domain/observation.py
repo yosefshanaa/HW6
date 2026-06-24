@@ -37,3 +37,17 @@ class Observation:
             ),
             "visible_barriers": [b.as_list() for b in self.visible_barriers],
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Observation:
+        """Rebuild an Observation from its wire mapping (e.g. an MCP tool result)."""
+        opp = data.get("visible_opponent")
+        return cls(
+            role=PlayerRole(data["role"]),
+            own_cell=Position.from_list(data["own_cell"]),
+            move_number=int(data["move_number"]),
+            vision_radius=int(data["vision_radius"]),
+            grid_size=list(data["grid_size"]),
+            visible_opponent=Position.from_list(opp) if opp else None,
+            visible_barriers=[Position.from_list(b) for b in data.get("visible_barriers", [])],
+        )

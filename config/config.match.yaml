@@ -1,0 +1,94 @@
+# Cop & Thief — COMPETITIVE MATCH config (derived from config.yaml).
+# Strongest agents at the agreed bonus-match settings: search_llm (minimax move +
+# LLM bluff) at vision radius 2, unbounded start distance. config.yaml keeps the
+# heuristic default untouched. Use: uv run cop-thief --config config/config.match.yaml
+# (the inter-team match via cop-thief-match reads match.vision_radius = 2 too).
+version: "1.00"
+
+# --- Board & game rules ---
+grid_size: [5, 5]          # [rows, cols]; default 5x5
+max_moves: 25              # max Thief moves per sub-game (25 rounds)
+num_games: 6              # sub-games per series
+max_barriers: 5           # max barriers the Cop may place per sub-game
+vision_radius: 2          # agreed bonus-match radius (SHARED_MATCH_RULES §2.9)
+movement_mode: eight_directional
+
+# --- Scoring (PRD §8) ---
+scoring:
+  cop_win: 20             # Cop points on capture
+  thief_win: 10           # Thief points on escape
+  cop_loss: 5             # Cop points when the Thief escapes
+  thief_loss: 5           # Thief points when captured
+
+# --- Start positions ---
+start_mode: random        # "random" (seeded) or "fixed"
+seed: 1234                # shared seed for reproducible starts
+start_distance_min: null  # match samples unbounded (floor is > vision_radius in code)
+start_distance_max: null  # so the only constraint is "initial distance exceeds radius"
+fixed_start:              # used only when start_mode == "fixed"
+  cop: [0, 0]
+  thief: [4, 4]
+
+# --- Agents / LLM ---
+agents:
+  cop_strategy: search_llm    # minimax move + LLM bluff
+  thief_strategy: search_llm
+search:
+  depth: 8                  # deeper look-ahead for the match (~110ms/move, well under timeout)
+llm:
+  # Provider for the LLM-driven agents. The API key is read from the environment
+  # (OPENAI_API_KEY), never stored here. agents.*_strategy must be "llm" to use it.
+  provider: openai        # none | openai | anthropic | gemini | ollama
+  model: "gpt-4o-mini"    # cheap/fast for iteration; bump to gpt-4o for real matches
+  temperature: 0.7
+  per_turn_timeout_seconds: 30
+
+# --- MCP servers ---
+# Local host/port for dev. In the cloud, $PORT overrides the port and the server binds
+# 0.0.0.0 (see mcp/serve.py::resolve_bind); deploy via Dockerfile + docs/DEPLOY.md.
+mcp:
+  cop_host: "127.0.0.1"
+  cop_port: 8001
+  thief_host: "127.0.0.1"
+  thief_port: 8002
+  cop_url: "https://cop-thief-cop-1035205205472.me-west1.run.app/mcp"
+  thief_url: "https://cop-thief-thief-1035205205472.me-west1.run.app/mcp"
+
+# --- Auth (tokens come from env, never here) ---
+auth:
+  header_name: "Authorization"
+  token_env_var: "MCP_AUTH_TOKEN"   # token value lives in the environment
+
+# --- Reporting / email ---
+report:
+  recipient: "rmisegal+uoh26b@gmail.com"
+  timezone: "Asia/Jerusalem"
+  group_name: "TODO: Team-Name"
+  students: []                       # TODO: [{name, id}, ...]
+  github_repo: "https://github.com/yosefshanaa/HW6"
+  credentials_file: "credentials.json"
+  token_file: "token.json"
+  gmail_scopes: ["https://www.googleapis.com/auth/gmail.send"]
+
+# --- Bonus inter-group match (§9.2) ---
+# group_1 = us; group_2 = the partner team. For the local dry-run
+# (`uv run cop-thief-match`) group_2 is a simulated peer on loopback.
+# Real URLs/tokens are exchanged out of band and stay out of this file.
+match:
+  vision_radius: 2                     # agreed bonus-match radius (SHARED_MATCH_RULES §2.9)
+  group_1: "TODO: Team-Name"
+  group_2: "TODO: Partner-Team"
+  github_repo_group_1: "https://github.com/yosefshanaa/HW6"
+  github_repo_group_2: "TODO: https://github.com/partner/HW6"
+  students_group_1: []                 # TODO: [{name, id}, ...]
+  students_group_2: []
+  mcp_url_group_1_cop: "https://cop-thief-cop-1035205205472.me-west1.run.app/mcp"
+  mcp_url_group_1_thief: "https://cop-thief-thief-1035205205472.me-west1.run.app/mcp"
+  mcp_url_group_2_cop: "TODO: https://g2-cop-mcp.example.run"      # partner — exchange out of band
+  mcp_url_group_2_thief: "TODO: https://g2-thief-mcp.example.run"  # partner — exchange out of band
+
+# --- Logging / replay ---
+logging:
+  level: "INFO"
+  results_dir: "results"
+  logs_dir: "logs"

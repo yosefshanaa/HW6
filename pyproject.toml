@@ -27,10 +27,12 @@ llm = ["openai>=1.0"]
 [project.scripts]
 cop-thief = "cop_thief.main:main"
 cop-thief-match = "cop_thief.match.cli:main"
+cop-thief-remote-match = "cop_thief.match.remote_cli:main"
 cop-thief-gui = "cop_thief.gui.app:main"
 cop-thief-web-gui = "cop_thief.gui.web_app:main"
 cop-thief-cop-server = "cop_thief.mcp.cop_server:main"
 cop-thief-thief-server = "cop_thief.mcp.thief_server:main"
+cop-thief-smoke = "cop_thief.mcp.smoke:main"
 
 [dependency-groups]
 dev = [

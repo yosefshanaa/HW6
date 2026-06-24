@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import jsonschema
+import pytest
 
-from cop_thief.agents.agent_client import AgentClient, InProcessTransport
+from cop_thief.agents.agent_client import AgentClient, HttpTransport, InProcessTransport
 from cop_thief.constants import GameStatus
 from cop_thief.domain.position import Position
 from cop_thief.engine.referee import Referee
@@ -89,3 +90,89 @@ def test_agent_client_round_trip_over_transport():
     thief.send_message("you'll never catch me")
     assert transport.inbox[0]["message"] == "you'll never catch me"
     assert cop.status()["turn"] == "cop"
+
+
+def test_reset_tool_starts_a_new_subgame():
+    ref = make_referee(cop=(0, 0), thief=(4, 4))
+    tools.submit_turn(ref, turn_payload("thief", (3, 3)))  # dirty the state
+    res = tools.reset(ref, [1, 1], [3, 3])
+    assert res["ok"] is True
+    status = tools.get_match_status(ref)
+    assert (status["cop"], status["thief"], status["thief_moves"]) == ([1, 1], [3, 3], 0)
+
+
+def test_reset_tool_rejects_bad_positions_without_crashing():
+    ref = make_referee()
+    res = tools.reset(ref, [2, 2], [2, 2])  # same cell is illegal
+    assert res["ok"] is False and res["reason"]
+
+
+def test_get_messages_read_back_and_reset_clears_inbox():
+    transport = InProcessTransport(make_referee())
+    cop = AgentClient(transport, "cop")
+    assert cop.messages() == []                      # empty to start
+    cop.transport.call("receive_message", from_role="thief", message="going north")
+    assert cop.messages() == [{"from": "thief", "message": "going north"}]
+    cop.reset([0, 0], [4, 4])
+    assert cop.messages() == []                      # reset wipes the bluff inbox
+
+
+# --- Networked path: the HTTP client transport against an in-memory FastMCP app ---
+fastmcp = pytest.importorskip("fastmcp")
+
+
+def _app(role: str):
+    from cop_thief.mcp.server_app import build_app
+    from cop_thief.shared.config import load_config
+
+    return build_app(role, load_config())
+
+
+def test_http_transport_round_trip_in_memory():
+    # Same AgentClient code path as a real URL, but in-memory (no socket).
+    transport = HttpTransport(_app("cop"))
+    try:
+        cop = AgentClient(transport, "cop")
+        assert cop.health()["ok"] is True
+        assert cop.reset([0, 0], [4, 4])["ok"] is True
+        obs = cop.observe()
+        assert obs["role"] == "cop" and obs["own_cell"] == [0, 0]
+        res = AgentClient(transport, "thief").submit(turn_payload("thief", (3, 4)))
+        assert res["accepted"] is True
+        assert cop.status()["thief"] == [3, 4]
+    finally:
+        transport.close()
+
+
+def test_http_transport_observation_is_role_bound_no_fog_leak():
+    # A cop-role server only ever reveals the cop's legal view, even to a thief client.
+    transport = HttpTransport(_app("cop"))
+    try:
+        transport.call("reset", cop=[0, 0], thief=[4, 4])
+        assert AgentClient(transport, "thief").observe()["role"] == "cop"
+    finally:
+        transport.close()
+
+
+def test_http_transport_rejects_unknown_tool():
+    transport = HttpTransport(_app("cop"))
+    try:
+        with pytest.raises(ValueError, match="unknown tool"):
+            transport.call("definitely_not_a_tool")
+    finally:
+        transport.close()
+
+
+def test_http_transport_message_channel_round_trip():
+    # Deliver a bluff and read it back over the HTTP client (the cross-team path).
+    transport = HttpTransport(_app("cop"))
+    try:
+        transport.call("reset", cop=[0, 0], thief=[4, 4])
+        transport.call("receive_message", from_role="thief", message="bluff: heading north")
+        assert AgentClient(transport, "cop").messages() == [
+            {"from": "thief", "message": "bluff: heading north"}
+        ]
+        transport.call("reset", cop=[0, 0], thief=[4, 4])      # new sub-game
+        assert AgentClient(transport, "cop").messages() == []  # inbox cleared
+    finally:
+        transport.close()
