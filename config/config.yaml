@@ -68,8 +68,10 @@ auth:
 report:
   recipient: "rmisegal+uoh26b@gmail.com"
   timezone: "Asia/Jerusalem"
-  group_name: "TODO: Team-Name"
-  students: []                       # TODO: [{name, id}, ...]
+  group_name: "ahk-yosi"
+  students:
+    - {name: "yosef shanaa", id: "213314859"}
+    - {name: "ahmad kaiss", id: "325811255"}
   github_repo: "https://github.com/yosefshanaa/HW6"
   credentials_file: "credentials.json"
   token_file: "token.json"
@@ -81,11 +83,13 @@ report:
 # Real URLs/tokens are exchanged out of band and stay out of this file.
 match:
   vision_radius: 2                     # agreed bonus-match radius (SHARED_MATCH_RULES §2.9)
-  group_1: "TODO: Team-Name"
+  group_1: "ahk-yosi"
   group_2: "TODO: Partner-Team"
   github_repo_group_1: "https://github.com/yosefshanaa/HW6"
   github_repo_group_2: "TODO: https://github.com/partner/HW6"
-  students_group_1: []                 # TODO: [{name, id}, ...]
+  students_group_1:
+    - {name: "yosef shanaa", id: "213314859"}
+    - {name: "ahmad kaiss", id: "325811255"}
   students_group_2: []
   mcp_url_group_1_cop: "TODO: https://g1-cop-mcp.example.run"
   mcp_url_group_1_thief: "TODO: https://g1-thief-mcp.example.run"
