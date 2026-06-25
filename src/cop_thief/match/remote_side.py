@@ -9,9 +9,11 @@ every move to **both**.
 Coordination is turn-based and race-safe: a side acts only when **both** referees
 agree it is its turn (so the other side, mid dual-submit, can never wedge a move in
 out of order). Sub-game boundaries are disambiguated by the per-(seed,index) start
-positions — both teams derive the same ones — so no extra handshake is needed. The
-Cop-side owns the per-sub-game ``reset`` (after a short grace so the other side has
-finished the previous sub-game); the Thief-side waits for that start to appear.
+positions — both teams derive the same ones — so no extra handshake is needed.
+**Each team resets only the server it owns** (inter-team agreement): the Cop-side
+resets the authoritative server to the agreed start (after a short grace so the peer
+has finished the previous sub-game); the Thief-side confirms that start, then mirrors
+it onto its own server. Neither team resets the other's server.
 """
 
 from __future__ import annotations
@@ -121,14 +123,18 @@ class RemoteSide:
         auth, mirror = self.clients_for(index)
         our_view = auth if role is PlayerRole.COP else mirror
         cop_pos, thief_pos = self._start_positions(index)
-        if role is PlayerRole.COP:                       # cop-side owns the reset
+        # Each team resets ONLY the server it owns (inter-team agreement). The Cop side
+        # resets the authoritative server; the Thief side confirms that start, then
+        # mirrors it onto its own server — so a stale mirror can't wedge the next
+        # sub-game (the bug that stalled the cross-team run at the role swap).
+        if role is PlayerRole.COP:                       # we own the authoritative (cop) server
             time.sleep(self.RESET_GRACE)                 # let the peer finish the prior sub-game
             auth.reset(cop_pos.as_list(), thief_pos.as_list())
+            _log.info("sub-game %d: reset our cop server as host", index)
+        else:                                            # we own the mirror (thief) server
+            self._await_cop_start(index, auth, cop_pos, thief_pos)
             mirror.reset(cop_pos.as_list(), thief_pos.as_list())
-            _log.info("sub-game %d: reset as host (cop)", index)
-        else:
-            self._await_start(index, auth, mirror, cop_pos, thief_pos)
-            _log.info("sub-game %d: start observed (thief)", index)
+            _log.info("sub-game %d: cop start confirmed; mirrored onto our thief server", index)
         mem = {"max_barriers": self.max_barriers} if role is PlayerRole.COP else {}
         store = ReplayStore(self.series_dir / f"sub_game_{index}.jsonl")
         deadline = time.time() + self.SUBGAME_TIMEOUT
@@ -145,20 +151,24 @@ class RemoteSide:
                 time.sleep(self.POLL)
         return self._result(index, auth.status())
 
-    def _await_start(self, index, auth, mirror, cop_pos, thief_pos) -> None:
-        """Wait until both referees show the seed-derived fresh start for ``index``."""
+    def _await_cop_start(self, index, auth, cop_pos, thief_pos) -> None:
+        """Wait until the Cop-side authoritative server shows the agreed fresh start.
+
+        The Cop side owns its server's reset; we (Thief) confirm it is at the
+        seeded start for ``index`` before mirroring that start onto our own server.
+        """
         want = (cop_pos.as_list(), thief_pos.as_list())
         deadline = time.time() + self.SUBGAME_TIMEOUT
         while time.time() <= deadline:
-            cs, ms = auth.status(), mirror.status()
+            cs = auth.status()
             fresh = (
                 cs["status"] == GameStatus.ONGOING.value and cs["thief_moves"] == 0
-                and (cs["cop"], cs["thief"]) == want and (ms["cop"], ms["thief"]) == want
+                and (cs["cop"], cs["thief"]) == want
             )
             if fresh:
                 return
             time.sleep(self.POLL)
-        raise TimeoutError(f"sub-game {index}: host never reset to the expected start")
+        raise TimeoutError(f"sub-game {index}: cop host never reset to the expected start")
 
     def _play_turn(self, index, role, auth, mirror, our_view, mem, store) -> None:
         # Read the opponent's bluff over MCP from our own view server before deciding.
