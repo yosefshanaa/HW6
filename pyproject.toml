@@ -5,7 +5,10 @@ description = "HW6 — Dual AI Agent Race via MCP Servers (Cop & Thief): a parti
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "TODO: Team Name" }]
+authors = [
+    { name = "Yosef Shanaa" },
+    { name = "Ahmad Kaiss" },
+]
 dependencies = [
     "pyyaml>=6.0",
     "jsonschema>=4.0",
@@ -23,6 +26,9 @@ gmail = [
 # LLM-driven agents (real provider). Tests use a stub responder; install only
 # for live LLM play. The API key comes from the environment, never config.
 llm = ["openai>=1.0"]
+# Results-analysis notebook (notebooks/results_analysis.ipynb): Jupyter + plots.
+# Not needed to run the game or the tests; install only to open the notebook.
+analysis = ["notebook>=7.0", "matplotlib>=3.7"]
 
 [project.scripts]
 cop-thief = "cop_thief.main:main"
