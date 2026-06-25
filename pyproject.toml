@@ -73,6 +73,15 @@ omit = [
     "src/cop_thief/mcp/server_app.py",
     "src/cop_thief/mcp/asgi_auth.py",
     "src/cop_thief/agents/providers.py",
+    # Networked inter-team match: live-only glue — CLI entry points, the HTTP
+    # transport, and the us-vs-us reference driver. Exercised against real Cloud
+    # Run servers (not unit-testable in CI); the play-our-half driver
+    # (match/remote_side.py) and the engine/agents stay measured.
+    "src/cop_thief/match/remote_cli.py",
+    "src/cop_thief/match/remote_side_cli.py",
+    "src/cop_thief/match/remote_match.py",
+    "src/cop_thief/mcp/smoke.py",
+    "src/cop_thief/agents/agent_client.py",
 ]
 
 [tool.coverage.report]
