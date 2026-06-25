@@ -250,13 +250,7 @@ was played on **2026-06-25** (timezone `Asia/Jerusalem`); our live §9.2 send re
 `19eff5b7688c669f`.
 
 **▶ Watch the full live match** — both computers running side by side:
-**[youtube.com/watch?v=GtG1m9bNnQs](https://www.youtube.com/watch?v=GtG1m9bNnQs)**
-
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=GtG1m9bNnQs">
-    <img src="https://img.youtube.com/vi/GtG1m9bNnQs/hqdefault.jpg" width="60%" alt="Video — ahk-yosi vs amireman live cross-team match, both machines running (click to watch on YouTube)">
-  </a>
-</p>
+**https://www.youtube.com/watch?v=GtG1m9bNnQs**
 
 Real-time photos from the cross-team session: our ThinkPad (**ahk-yosi**, left) and the partner team's
 ASUS (**amireman**, right) running the live match over the deployed MCP servers.
