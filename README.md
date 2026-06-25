@@ -12,6 +12,9 @@ runs the series, enforces the rules through a single referee, logs every turn, a
 The graded core is the **orchestration, systems engineering, MCP integration, reliable automation,
 logging and reporting** — *not* who wins the game.
 
+**Team `ahk-yosi`** — Yosef Shanaa (`213314859`) · Ahmad Kaiss (`325811255`).
+Bonus opponent: **`amireman`** — Amir Fadila (`206663338`) · Eman Sarhan (`323047407`).
+
 > Assignment: Dr. Yoram Segal, *"Dual AI Agent race via MCP"* (v**1.00**).
 > Full requirements & design live in [`docs/`](docs/):
 > [PRD](docs/PRD.md) · [PLAN/architecture](docs/PLAN.md) · [TODO](docs/TODO.md) ·
@@ -29,11 +32,12 @@ mutually-agreed cross-team game played live and a live email of the result to th
 | **Local internal series** (required) | ✅ 6 sub-games played; §9.1 report built, persisted & printed |
 | **MCP servers on Google Cloud** | ✅ both deployed to Cloud Run (`me-west1`), HTTPS + bearer-auth, smoke-verified |
 | **Bonus inter-group match** (optional) | ✅ **played live vs `amireman`** over the deployed MCP servers |
-| **§9.2 bonus report emailed** | ✅ both teams emailed **identical** JSON to Dr. Yoram Segal at the same time (`mutual_agreement: true`) — a real send, confirmed by the returned message id |
+| **§9.2 bonus report emailed** | ✅ both teams emailed **identical** JSON to Dr. Yoram Segal at the same time (`mutual_agreement: true`) — a real send on **2026-06-25**, Gmail message id `19eff5b7688c669f` |
 
 **Bonus result:** `ahk-yosi` won the series **5–1** — totals **ahk-yosi 85 / amireman 45**,
-`series_winner: ahk-yosi`. Live photos and the final terminal output are in the
-**Live two-team match** section below.
+`series_winner: ahk-yosi`. 📹 **Live video of both machines running:**
+[youtube.com/watch?v=GtG1m9bNnQs](https://www.youtube.com/watch?v=GtG1m9bNnQs). Photos and the final
+terminal output are in the **Live two-team match** section below.
 
 ## Quick start
 
@@ -74,8 +78,8 @@ on the baseline heuristic agents.
   deterministically.
 - **Reporting** — §9.1 internal + §9.2 bonus JSON report builders; a **mockable** Gmail sender with a
   JSON-only body.
-- **Engineering gates** — SDK facade, API Gatekeeper for every external call, **172 tests**, Ruff
-  clean, CI, files ≤ 150 lines.
+- **Engineering gates** — SDK facade, API Gatekeeper for every external call, **174 tests**, Ruff
+  clean, CI, small single-purpose modules.
 
 ## Install
 
@@ -241,7 +245,18 @@ We played the full bonus series **live against team `amireman`**. Both teams con
 the **MCP servers deployed on Google Cloud Run** (HTTPS + bearer auth), ran all six role-swapping
 sub-games over the network, and **agreed on every result**. We then **emailed the identical §9.2 JSON
 report to Dr. Yoram Segal at the same time** as amireman (`mutual_agreement: true`,
-`series_winner: ahk-yosi`). Final score: **ahk-yosi 85 / amireman 45** (a **5–1** series).
+`series_winner: ahk-yosi`). Final score: **ahk-yosi 85 / amireman 45** (a **5–1** series). The match
+was played on **2026-06-25** (timezone `Asia/Jerusalem`); our live §9.2 send returned Gmail message id
+`19eff5b7688c669f`.
+
+**▶ Watch the full live match** — both computers running side by side:
+**[youtube.com/watch?v=GtG1m9bNnQs](https://www.youtube.com/watch?v=GtG1m9bNnQs)**
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=GtG1m9bNnQs">
+    <img src="https://img.youtube.com/vi/GtG1m9bNnQs/hqdefault.jpg" width="60%" alt="Video — ahk-yosi vs amireman live cross-team match, both machines running (click to watch on YouTube)">
+  </a>
+</p>
 
 Real-time photos from the cross-team session: our ThinkPad (**ahk-yosi**, left) and the partner team's
 ASUS (**amireman**, right) running the live match over the deployed MCP servers.
@@ -261,6 +276,49 @@ report (`series_winner: ahk-yosi`, `mutual_agreement: true`) that was emailed to
   <img src="assets/match_live_output.png" width="80%" alt="Terminal output of the bonus series: six sub-game results, totals (ahk-yosi 85 / amireman 45), and the emitted §9.2 JSON report">
 </p>
 
+<details>
+<summary><b>The exact §9.2 report both teams emailed</b> (click to expand)</summary>
+
+```json
+{
+  "report_type": "bonus_game",
+  "groups": { "group_1": "ahk-yosi", "group_2": "amireman" },
+  "github_repo_group_1": "https://github.com/yosefshanaa/HW6",
+  "github_repo_group_2": "https://github.com/AMIR13BD/cop-thief",
+  "mcp_url_group_1_cop": "https://cop-thief-cop-1035205205472.me-west1.run.app/mcp",
+  "mcp_url_group_1_thief": "https://cop-thief-thief-1035205205472.me-west1.run.app/mcp",
+  "mcp_url_group_2_cop": "https://cop-thief-cop-wail7kwomq-zf.a.run.app/mcp",
+  "mcp_url_group_2_thief": "https://cop-thief-thief-wail7kwomq-zf.a.run.app/mcp",
+  "timezone": "Asia/Jerusalem",
+  "students_group_1": [
+    { "name": "yosef shanaa", "id": "213314859" },
+    { "name": "ahmad kaiss", "id": "325811255" }
+  ],
+  "students_group_2": [
+    { "name": "Amir Fadila", "id": "206663338" },
+    { "name": "Eman Sarhan", "id": "323047407" }
+  ],
+  "sub_games": [
+    { "index": 1, "winner": "cop",   "moves_played": 3,  "cop_score": 20, "thief_score": 5,  "technical_loss": false, "cop_group": "ahk-yosi", "thief_group": "amireman", "winner_group": "ahk-yosi" },
+    { "index": 2, "winner": "cop",   "moves_played": 3,  "cop_score": 20, "thief_score": 5,  "technical_loss": false, "cop_group": "ahk-yosi", "thief_group": "amireman", "winner_group": "ahk-yosi" },
+    { "index": 3, "winner": "cop",   "moves_played": 2,  "cop_score": 20, "thief_score": 5,  "technical_loss": false, "cop_group": "ahk-yosi", "thief_group": "amireman", "winner_group": "ahk-yosi" },
+    { "index": 4, "winner": "cop",   "moves_played": 14, "cop_score": 20, "thief_score": 5,  "technical_loss": false, "cop_group": "amireman", "thief_group": "ahk-yosi", "winner_group": "amireman" },
+    { "index": 5, "winner": "thief", "moves_played": 25, "cop_score": 5,  "thief_score": 10, "technical_loss": false, "cop_group": "amireman", "thief_group": "ahk-yosi", "winner_group": "ahk-yosi" },
+    { "index": 6, "winner": "thief", "moves_played": 25, "cop_score": 5,  "thief_score": 10, "technical_loss": false, "cop_group": "amireman", "thief_group": "ahk-yosi", "winner_group": "ahk-yosi" }
+  ],
+  "totals_by_group": { "ahk-yosi": 85, "amireman": 45 },
+  "bonus_claim": { "ahk-yosi": 10, "amireman": 7 },
+  "series_winner": "ahk-yosi",
+  "mutual_agreement": true
+}
+```
+
+Generated on our side at `results/side-ahk-yosi-20260625T150743/bonus_report.json` with the per-turn
+logs (`sub_game_<n>.jsonl`) beside it. ahk-yosi won sub-games 1, 2, 3 (as Cop) and 5, 6 (as Thief);
+amireman took sub-game 4 — a **5–1** series.
+
+</details>
+
 ## Expected outputs
 
 Each headless/GUI run writes, under `results/<timestamp>/`:
@@ -275,6 +333,9 @@ Other commands:
 - `cop-thief-web-gui --output <path>` → a self-contained static HTML file (live mode serves over loopback and writes no file).
 - `cop-thief-match` → `results/match-<timestamp>/sub_game_<n>.jsonl` + `bonus_report.json` (§9.2,
   with `totals_by_group`, `bonus_claim`, `mutual_agreement: true`).
+- `cop-thief-play-side` / `cop-thief-remote-match` → `results/side-<group>-<timestamp>/` (resp.
+  `match-<timestamp>/`) with `sub_game_<n>.jsonl` + the §9.2 `bonus_report.json` — exactly the report
+  we emailed (e.g. `results/side-ahk-yosi-20260625T150743/`).
 
 `results/` is git-ignored. A sample report lives at
 [`docs/examples/sample_report.json`](docs/examples/sample_report.json).
@@ -408,7 +469,7 @@ uv run ruff check             # lint (zero violations required)
 uv run python notebooks/parameter_sweep.py   # local parameter-sensitivity sweep
 ```
 
-Latest local run: **172 passed** (with the `mcp` extra), **0 lint violations**.
+Latest local run: **174 passed** (with the `mcp` extra), **0 lint violations** (`ruff check`).
 
 ## What is complete
 
@@ -431,7 +492,7 @@ Latest local run: **172 passed** (with the `mcp` extra), **0 lint violations**.
   `series_winner: ahk-yosi`, totals 85–45, a 5–1 series).
 - Terminal + browser GUIs with fog views and replay; structured JSONL logging; loopback dry-run
   (`cop-thief-match`) with mirror-and-flag reconciliation.
-- CI, **172 tests**, Ruff clean.
+- CI, **174 tests**, Ruff clean.
 
 ## External inputs — all in place
 
