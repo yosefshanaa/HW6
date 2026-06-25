@@ -10,10 +10,11 @@ Coordination is turn-based and race-safe: a side acts only when **both** referee
 agree it is its turn (so the other side, mid dual-submit, can never wedge a move in
 out of order). Sub-game boundaries are disambiguated by the per-(seed,index) start
 positions — both teams derive the same ones — so no extra handshake is needed.
-**Each team resets only the server it owns** (inter-team agreement): the Cop-side
-resets the authoritative server to the agreed start (after a short grace so the peer
-has finished the previous sub-game); the Thief-side confirms that start, then mirrors
-it onto its own server. Neither team resets the other's server.
+Reset is hardened for cross-team play and survives either reset convention on the
+peer's side: the **Cop host resets both referees** (the peer may not reset a mirror
+it doesn't own), and the **Thief also resets its own mirror** as a safety net (the
+peer's Cop may reset only its own server). All resets target the same agreed start,
+so the overlap is idempotent — whichever side resets the mirror, it ends up fresh.
 """
 
 from __future__ import annotations
@@ -123,18 +124,20 @@ class RemoteSide:
         auth, mirror = self.clients_for(index)
         our_view = auth if role is PlayerRole.COP else mirror
         cop_pos, thief_pos = self._start_positions(index)
-        # Each team resets ONLY the server it owns (inter-team agreement). The Cop side
-        # resets the authoritative server; the Thief side confirms that start, then
-        # mirrors it onto its own server — so a stale mirror can't wedge the next
-        # sub-game (the bug that stalled the cross-team run at the role swap).
-        if role is PlayerRole.COP:                       # we own the authoritative (cop) server
+        # Reset hardened for cross-team play. As Cop host we reset BOTH referees (the
+        # peer may not reset a mirror it doesn't own — without this its stale mirror
+        # stays terminal and wedges the sub-game). As Thief we ALSO reset our own
+        # mirror (the peer's Cop may reset only its own server). All resets target the
+        # same agreed start, so the overlap is idempotent.
+        if role is PlayerRole.COP:                       # Cop host: reset both referees
             time.sleep(self.RESET_GRACE)                 # let the peer finish the prior sub-game
-            auth.reset(cop_pos.as_list(), thief_pos.as_list())
-            _log.info("sub-game %d: reset our cop server as host", index)
-        else:                                            # we own the mirror (thief) server
+            mirror.reset(cop_pos.as_list(), thief_pos.as_list())   # mirror first...
+            auth.reset(cop_pos.as_list(), thief_pos.as_list())     # ...then auth (the Thief waits on it)
+            _log.info("sub-game %d: reset both referees as cop host", index)
+        else:                                            # Thief: confirm cop start, reset own mirror
             self._await_cop_start(index, auth, cop_pos, thief_pos)
             mirror.reset(cop_pos.as_list(), thief_pos.as_list())
-            _log.info("sub-game %d: cop start confirmed; mirrored onto our thief server", index)
+            _log.info("sub-game %d: cop start confirmed; reset our thief mirror", index)
         mem = {"max_barriers": self.max_barriers} if role is PlayerRole.COP else {}
         store = ReplayStore(self.series_dir / f"sub_game_{index}.jsonl")
         deadline = time.time() + self.SUBGAME_TIMEOUT
