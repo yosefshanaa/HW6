@@ -32,8 +32,12 @@ class Orchestrator:
     ) -> None:
         self.config = config
         self.referee = Referee.from_config(config)
-        self.cop = make_strategy(PlayerRole.COP, config.get("agents.cop_strategy", "heuristic"))
-        self.thief = make_strategy(PlayerRole.THIEF, config.get("agents.thief_strategy", "heuristic"))
+        self.cop = make_strategy(
+            PlayerRole.COP, config.get("agents.cop_strategy", "heuristic"), config=config
+        )
+        self.thief = make_strategy(
+            PlayerRole.THIEF, config.get("agents.thief_strategy", "heuristic"), config=config
+        )
         # ``seed`` overrides the (reproducible) config seed — the live GUI passes a
         # fresh one per run so "Play Again" produces a genuinely different game.
         self.rng = random.Random(config.get("seed") if seed is None else seed)

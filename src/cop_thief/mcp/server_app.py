@@ -39,6 +39,12 @@ def build_app(role: str, config) -> Any:
         return tools.health_check()
 
     @app.tool
+    def reset(cop: list, thief: list) -> dict:
+        """Start a fresh sub-game at the agreed (seeded) start cells; clear the inbox."""
+        inbox.clear()
+        return tools.reset(referee, cop, thief)
+
+    @app.tool
     def get_observation() -> dict:
         """Return this agent's legal partial view."""
         return tools.get_observation(referee, role)
@@ -57,6 +63,11 @@ def build_app(role: str, config) -> Any:
     def receive_message(from_role: str, message: str) -> dict:
         """Deliver an opponent's natural-language message."""
         return tools.receive_message(inbox, from_role, message)
+
+    @app.tool
+    def get_messages() -> dict:
+        """Return delivered opponent messages (the bluff channel read-back)."""
+        return tools.get_messages(inbox)
 
     @app.tool
     def get_match_status() -> dict:

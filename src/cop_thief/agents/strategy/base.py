@@ -25,6 +25,19 @@ def grid_center(grid_size: list[int]) -> Position:
     return Position(grid_size[0] // 2, grid_size[1] // 2)
 
 
+def mobility(cell: Position, obs: Observation) -> int:
+    """Count of legal king-moves out of ``cell`` (open space = more escape routes)."""
+    blocked = set(obs.visible_barriers)
+    return sum(
+        1 for n in cell.neighbors8() if n.in_bounds(obs.grid_size) and n not in blocked
+    )
+
+
+def on_edge(pos: Position, grid_size: list[int]) -> bool:
+    """Whether ``pos`` sits on a board edge (row/col is first or last)."""
+    return pos.row in (0, grid_size[0] - 1) or pos.col in (0, grid_size[1] - 1)
+
+
 class Strategy(ABC):
     """Decides a legal action from a partial observation.
 

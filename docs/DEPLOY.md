@@ -56,14 +56,23 @@ Run the Thief server the same way with `-e ROLE=thief -e PORT=8081 -p 8081:8081`
 The image binds `0.0.0.0:$PORT`; every platform below injects `$PORT` and terminates TLS, so you
 get an `https://…` URL automatically. Deploy **once per role** (two services).
 
-**Google Cloud Run**
+**Google Cloud Run** (verified working — used for the live deploy)
 ```bash
 gcloud run deploy cop-thief-cop   --source . --region <r> --allow-unauthenticated \
-  --set-env-vars ROLE=cop   --set-env-vars MCP_AUTH_TOKEN=<cop-token>
+  --min-instances=1 --max-instances=1 \
+  --set-env-vars="ROLE=cop,MCP_AUTH_TOKEN=<cop-token>"   --quiet
 gcloud run deploy cop-thief-thief --source . --region <r> --allow-unauthenticated \
-  --set-env-vars ROLE=thief --set-env-vars MCP_AUTH_TOKEN=<thief-token>
+  --min-instances=1 --max-instances=1 \
+  --set-env-vars="ROLE=thief,MCP_AUTH_TOKEN=<thief-token>" --quiet
 ```
 > `--allow-unauthenticated` opens the *network* path; our **bearer token** is the real gate.
+>
+> **Gotchas (learned in the live deploy):**
+> - **Pin to one instance** (`--min-instances=1 --max-instances=1`): the referee state lives
+>   in memory, so a second autoscaled instance would fork the game. One instance, always warm.
+> - Pass env vars as **one comma-separated `--set-env-vars`** — repeating the flag overwrites.
+> - Use the endpoint **without a trailing slash** (`…run.app/mcp`). `/mcp/` 307-redirects and the
+>   HTTP client drops the bearer header on the hop → a misleading 401. (`HttpTransport` now strips it.)
 
 **Fly.io**
 ```bash
@@ -97,5 +106,24 @@ match:
 ```
 
 The bonus match swaps the loopback `InProcessTransport` for these HTTPS endpoints without changing
-the match logic (see [`PRD_bonus_match.md`](PRD_bonus_match.md) and
-[`../SHARED_MATCH_RULES.md`](../SHARED_MATCH_RULES.md)).
+the match logic (`agents/agent_client.py::HttpTransport`, the FastMCP client with bearer auth — see
+[`PRD_bonus_match.md`](PRD_bonus_match.md) and [`../SHARED_MATCH_RULES.md`](../SHARED_MATCH_RULES.md)).
+
+## 5. Match-day runbook
+
+1. **Deploy** both roles (§3), each with its **own** `MCP_AUTH_TOKEN` (cop token ≠ thief token).
+2. **Smoke-test every URL** with the built-in checker (preferred over raw `curl` — it speaks MCP and
+   verifies the token *and* that the absence of one is rejected):
+   ```bash
+   uv run cop-thief-smoke https://…cop…/mcp/   --token <cop-token>   --check-auth
+   uv run cop-thief-smoke https://…thief…/mcp/ --token <thief-token> --check-auth
+   ```
+   Expect `[ok] health={…}` **and** `unauthenticated call rejected — bearer auth enforced`.
+3. **Exchange** the four URLs + tokens and the **shared seed** with the partner out of band; fill
+   `match.*` URLs and team metadata (`match.group_*`, `match.students_*`) in config.
+4. **Play.** Each team derives identical sub-game start cells from the shared seed; the orchestrator
+   begins each of the 6 sub-games with the `reset` tool (`AgentClient.reset(cop, thief)`), then runs
+   the thief-first turn loop. A network drop mid-sub-game = Technical Loss → rerun (shared rules §3).
+5. **Reconcile & report**: compare per-sub-game outcomes (the mirror engines flag any divergence),
+   then each team emails its identical §9.2 JSON.
+6. **Revoke** the tokens (rotate the secret + redeploy) once the match is done.

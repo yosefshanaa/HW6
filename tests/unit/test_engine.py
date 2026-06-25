@@ -119,14 +119,22 @@ def test_t11_off_board_move_rejected_and_loses():
     assert res.status is GameStatus.COP_WIN
 
 
-def test_cop_barrier_then_must_move_off():
+def test_cop_barrier_on_adjacent_cell():
     ref = make_referee()
     ref.reset(cop=Position(2, 2), thief=Position(0, 0))
     ref.apply(PlayerRole.THIEF, Action.move(Position(0, 1)))
-    res = ref.apply(PlayerRole.COP, Action.barrier(Position(2, 2)))
+    res = ref.apply(PlayerRole.COP, Action.barrier(Position(2, 3)))  # adjacent empty cell
     assert res.accepted is True
     assert ref.state.barriers_placed() == 1
-    assert ref.state.is_barrier(Position(2, 2))
+    assert ref.state.is_barrier(Position(2, 3))
+
+
+def test_barrier_on_own_cell_is_rejected():
+    ref = make_referee()
+    ref.reset(cop=Position(2, 2), thief=Position(0, 0))
+    ref.apply(PlayerRole.THIEF, Action.move(Position(0, 1)))
+    valid, reason = ref.validate(PlayerRole.COP, Action.barrier(Position(2, 2)))  # own cell
+    assert valid is False and "adjacent" in reason
 
 
 def test_barrier_is_single_action_cop_does_not_move():
@@ -136,10 +144,10 @@ def test_barrier_is_single_action_cop_does_not_move():
     ref.reset(cop=Position(2, 2), thief=Position(0, 0))
     ref.apply(PlayerRole.THIEF, Action.move(Position(0, 1)))
     before = ref.state.cop
-    res = ref.apply(PlayerRole.COP, Action.barrier(Position(2, 2)))
+    res = ref.apply(PlayerRole.COP, Action.barrier(Position(2, 3)))  # adjacent empty cell
     assert res.accepted is True
-    assert ref.state.cop == before              # the Cop did NOT also move
-    assert ref.state.is_barrier(before)         # the barrier sits on its own cell
+    assert ref.state.cop == before              # the Cop did NOT move
+    assert ref.state.is_barrier(Position(2, 3))  # the barrier sits on the adjacent cell
     assert ref.state.barriers_placed() == 1     # exactly one committed action
     assert ref.state.turn is PlayerRole.THIEF   # turn handed back to the Thief
 

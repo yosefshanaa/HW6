@@ -1,5 +1,8 @@
-# Cop & Thief — main game/system configuration (versioned).
-# All tunable values live here, never hard-coded in source (PRD §12, ADR-006).
+# Cop & Thief — COMPETITIVE MATCH config (derived from config.yaml).
+# Strongest agents at the agreed bonus-match settings: search_llm (minimax move +
+# LLM bluff) at vision radius 2, unbounded start distance. config.yaml keeps the
+# heuristic default untouched. Use: uv run cop-thief --config config/config.match.yaml
+# (the inter-team match via cop-thief-match reads match.vision_radius = 2 too).
 version: "1.00"
 
 # --- Board & game rules ---
@@ -7,9 +10,7 @@ grid_size: [5, 5]          # [rows, cols]; default 5x5
 max_moves: 25              # max Thief moves per sub-game (25 rounds)
 num_games: 6              # sub-games per series
 max_barriers: 5           # max barriers the Cop may place per sub-game
-vision_radius: 1          # local-series default: r1 keeps a balanced contest on 5x5
-                          # (r2 = near-full visibility -> structurally ~100% Cop).
-                          # The bonus match overrides this to the agreed r2 (match.vision_radius).
+vision_radius: 2          # agreed bonus-match radius (SHARED_MATCH_RULES §2.9)
 movement_mode: eight_directional
 
 # --- Scoring (PRD §8) ---
@@ -22,24 +23,18 @@ scoring:
 # --- Start positions ---
 start_mode: random        # "random" (seeded) or "fixed"
 seed: 1234                # shared seed for reproducible starts
-start_distance_min: 3     # floor on Chebyshev start separation (local balance: avoids
-                          # distance-2 starts that trivially capture the blind Thief).
-start_distance_max: 3     # cap Chebyshev start separation (avoids distance-4 far-corner
-                          # starts on 5x5). With min==max==3, starts are exactly 3 apart.
-                          # Omit/null = unbounded. The bonus match samples unbounded at r2.
+start_distance_min: null  # match samples unbounded (floor is > vision_radius in code)
+start_distance_max: null  # so the only constraint is "initial distance exceeds radius"
 fixed_start:              # used only when start_mode == "fixed"
   cop: [0, 0]
   thief: [4, 4]
 
 # --- Agents / LLM ---
 agents:
-  cop_strategy: heuristic   # heuristic | q_table | llm | search | search_llm
-  thief_strategy: heuristic
-# Bounded minimax over the real rules drives the move for the search/search_llm
-# agents (Cop maximizes capture + herds with barriers, Thief maximizes survival);
-# the heuristic takes over under fog. Depth is plies of look-ahead.
+  cop_strategy: search_llm    # minimax move + LLM bluff
+  thief_strategy: search_llm
 search:
-  depth: 6                  # 6 ~16ms/move, 8 ~110ms/move on 5x5 (both < per-turn timeout)
+  depth: 8                  # deeper look-ahead for the match (~110ms/move, well under timeout)
 llm:
   # Provider for the LLM-driven agents. The API key is read from the environment
   # (OPENAI_API_KEY), never stored here. agents.*_strategy must be "llm" to use it.
@@ -84,17 +79,19 @@ report:
 match:
   vision_radius: 2                     # agreed bonus-match radius (SHARED_MATCH_RULES §2.9)
   group_1: "ahk-yosi"
-  group_2: "TODO: Partner-Team"
+  group_2: "amireman"
   github_repo_group_1: "https://github.com/yosefshanaa/HW6"
-  github_repo_group_2: "TODO: https://github.com/partner/HW6"
+  github_repo_group_2: "https://github.com/AMIR13BD/cop-thief"
   students_group_1:
     - {name: "yosef shanaa", id: "213314859"}
     - {name: "ahmad kaiss", id: "325811255"}
-  students_group_2: []
-  mcp_url_group_1_cop: "TODO: https://g1-cop-mcp.example.run"
-  mcp_url_group_1_thief: "TODO: https://g1-thief-mcp.example.run"
-  mcp_url_group_2_cop: "TODO: https://g2-cop-mcp.example.run"
-  mcp_url_group_2_thief: "TODO: https://g2-thief-mcp.example.run"
+  students_group_2:
+    - {name: "Amir Fadila", id: "206663338"}
+    - {name: "Eman Sarhan", id: "323047407"}
+  mcp_url_group_1_cop: "https://cop-thief-cop-1035205205472.me-west1.run.app/mcp"
+  mcp_url_group_1_thief: "https://cop-thief-thief-1035205205472.me-west1.run.app/mcp"
+  mcp_url_group_2_cop: "https://cop-thief-cop-wail7kwomq-zf.a.run.app/mcp"
+  mcp_url_group_2_thief: "https://cop-thief-thief-wail7kwomq-zf.a.run.app/mcp"
 
 # --- Logging / replay ---
 logging:
