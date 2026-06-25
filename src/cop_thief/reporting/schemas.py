@@ -44,7 +44,7 @@ BONUS_SCHEMA = {
         "mcp_url_group_1_cop", "mcp_url_group_1_thief", "mcp_url_group_2_cop",
         "mcp_url_group_2_thief", "timezone", "students_group_1",
         "students_group_2", "sub_games", "totals_by_group", "bonus_claim",
-        "mutual_agreement",
+        "series_winner", "mutual_agreement",
     ],
     "properties": {
         "report_type": {"const": "bonus_game"},
@@ -53,6 +53,7 @@ BONUS_SCHEMA = {
         "sub_games": {"type": "array"},
         "totals_by_group": {"type": "object"},
         "bonus_claim": {"type": "object"},
+        "series_winner": {"type": "string"},
         "mutual_agreement": {"type": "boolean"},
     },
 }

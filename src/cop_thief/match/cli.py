@@ -33,6 +33,7 @@ def _print_summary(report: dict, series_dir) -> None:
               f"scores cop {sg['cop_score']} / thief {sg['thief_score']}", file=out)
     fmt = lambda d: ", ".join(f"{k} {v}" for k, v in d.items())  # noqa: E731
     print(f"  team totals: {fmt(report['totals_by_group'])}", file=out)
+    print(f"  series winner: {report['series_winner']}", file=out)
     print(f"  bonus claim: {fmt(report['bonus_claim'])}  (mutual_agreement="
           f"{str(report['mutual_agreement']).lower()})", file=out)
     print(f"  output dir : {series_dir}/  (sub_game_*.jsonl + bonus_report.json)", file=out)
