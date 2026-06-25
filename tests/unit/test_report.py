@@ -14,6 +14,7 @@ from cop_thief.reporting.report_builder import (
     build_bonus_report,
     build_internal_report,
     compute_bonus_claim,
+    compute_series_winner,
     validate_report,
 )
 
@@ -40,6 +41,12 @@ def test_compute_bonus_claim_cases():
     assert compute_bonus_claim({"A": 50, "B": 50}) == {"A": 5, "B": 5}
 
 
+def test_compute_series_winner_cases():
+    assert compute_series_winner({"A": 60, "B": 80}) == "B"
+    assert compute_series_winner({"A": 90, "B": 30}) == "A"
+    assert compute_series_winner({"A": 50, "B": 50}) == "tie"
+
+
 def test_bonus_report_validates_and_has_mutual_agreement():
     meta = {
         "group_1": "Team-A", "group_2": "Team-B",
@@ -54,6 +61,7 @@ def test_bonus_report_validates_and_has_mutual_agreement():
     validate_report(report, ReportType.BONUS)
     assert report["mutual_agreement"] is True
     assert report["bonus_claim"] == {"Team-A": 7, "Team-B": 10}
+    assert report["series_winner"] == "Team-B"
 
 
 def test_invalid_report_raises(config):

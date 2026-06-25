@@ -19,6 +19,22 @@ logging and reporting** — *not* who wins the game.
 
 ---
 
+## Submission status
+
+Both the **required local series** and the **optional bonus match** are complete — including a real,
+mutually-agreed cross-team game played live and a live email of the result to the grader.
+
+| Deliverable | Status |
+|---|---|
+| **Local internal series** (required) | ✅ 6 sub-games played; §9.1 report built, persisted & printed |
+| **MCP servers on Google Cloud** | ✅ both deployed to Cloud Run (`me-west1`), HTTPS + bearer-auth, smoke-verified |
+| **Bonus inter-group match** (optional) | ✅ **played live vs `amireman`** over the deployed MCP servers |
+| **§9.2 bonus report emailed** | ✅ both teams emailed **identical** JSON to Dr. Yoram Segal at the same time (`mutual_agreement: true`) — a real send, confirmed by the returned message id |
+
+**Bonus result:** `ahk-yosi` won the series **5–1** — totals **ahk-yosi 85 / amireman 45**,
+`series_winner: ahk-yosi`. Live photos and the final terminal output are in the
+**Live two-team match** section below.
+
 ## Quick start
 
 ```bash
@@ -209,15 +225,23 @@ uv run cop-thief-play-side --group group_1          # the REAL match: drive only
   submitting to both referees. Proven with two concurrent instances (group_1 + group_2) playing a
   clean series against our live servers and agreeing on every result.
 
-**Still needs the partner** (only their side remains): their **two HTTPS MCP URLs** →
-`match.mcp_url_group_2_*`, their **two tokens** → `PEER_COP_MCP_AUTH_TOKEN` / `PEER_THIEF_MCP_AUTH_TOKEN`
-(env), their **team metadata** → `match.group_2` / `students_group_2`, and a quick confirmation their
-orchestration matches ours (dual-submit, Cop-side hosts `reset`, the seed/start derivation, and the
-eight-tool contract incl. `reset` + `get_messages`). Then each team emails **identical** §9.2 JSON
-with `mutual_agreement: true`. Our `match:`/`mcp:` fields are filled in
-[`config/config.match.yaml`](config/config.match.yaml); the `group_2` fields stay `TODO:` until exchanged.
+**Played live with the partner.** We exchanged details with team **amireman** — their **two HTTPS MCP
+URLs** (`match.mcp_url_group_2_*`), **two tokens** (`PEER_COP_MCP_AUTH_TOKEN` /
+`PEER_THIEF_MCP_AUTH_TOKEN`, env-only), and **team metadata** (`match.group_2` / `students_group_2`) —
+confirmed both orchestrations matched (dual-submit, Cop-side hosts `reset`, the seed/start derivation,
+the eight-tool contract incl. `reset` + `get_messages`), then ran the full 6-sub-game series live over
+the deployed servers. Both teams emailed **identical** §9.2 JSON with `mutual_agreement: true`. Our
+`match:`/`mcp:` fields and the exchanged `group_2` metadata are in
+[`config/config.match.yaml`](config/config.match.yaml) (peer tokens stay in the env) — see the
+**Live two-team match** section just below.
 
 ### Live two-team match — ahk-yosi vs amireman
+
+We played the full bonus series **live against team `amireman`**. Both teams connected their agents to
+the **MCP servers deployed on Google Cloud Run** (HTTPS + bearer auth), ran all six role-swapping
+sub-games over the network, and **agreed on every result**. We then **emailed the identical §9.2 JSON
+report to Dr. Yoram Segal at the same time** as amireman (`mutual_agreement: true`,
+`series_winner: ahk-yosi`). Final score: **ahk-yosi 85 / amireman 45** (a **5–1** series).
 
 Real-time photos from the cross-team session: our ThinkPad (**ahk-yosi**, left) and the partner team's
 ASUS (**amireman**, right) running the live match over the deployed MCP servers.
@@ -229,6 +253,13 @@ ASUS (**amireman**, right) running the live match over the deployed MCP servers.
 
 > The partner's screen is **redacted** in these photos — the live bearer tokens were on it during the
 > token exchange, and those are never published.
+
+Final series output on our side — the six sub-game results, `totals_by_group`, and the emitted §9.2
+report (`series_winner: ahk-yosi`, `mutual_agreement: true`) that was emailed to the grader:
+
+<p align="center">
+  <img src="assets/match_live_output.png" width="80%" alt="Terminal output of the bonus series: six sub-game results, totals (ahk-yosi 85 / amireman 45), and the emitted §9.2 JSON report">
+</p>
 
 ## Expected outputs
 
@@ -264,7 +295,7 @@ within its **vision radius** (Chebyshev) — the game is a **Dec-POMDP** ⟨n, S
 | Who plays | **One group, both agents** — its Cop vs its Thief | Two groups, over HTTPS |
 | Roles | **Fixed** Cop-vs-Thief for all 6 sub-games | **Swap**: 1–3 = A-Cop/B-Thief, 4–6 = B-Cop/A-Thief |
 | Needs | Nothing external (fully offline) | Partner team + exchanged MCP URLs/tokens |
-| Status | **Implemented & verified** | **Loopback dry-run implemented**; real match is external |
+| Status | **Implemented & verified** | ✅ **Played live vs `amireman`** (loopback dry-run + real networked match over Cloud Run) |
 
 The "3 as cop / 3 as thief" role split is a **bonus-match** rule, not the local series. The local
 dry-run `cop-thief-match` rehearses the bonus protocol on one machine: the **cop side owns the
@@ -343,7 +374,8 @@ All tunables live in [`config/`](config/) — never hard-coded:
   (Default agents are **heuristic**, so this file stays a balanced local demo.)
 - `config/config.llm.yaml` — run-only override: `agents.* = llm` (LLM-driven move + bluff).
 - `config/config.match.yaml` — competitive match config: `agents.* = search_llm`, r2, depth 8, the
-  live MCP URLs, and our team metadata (`ahk-yosi`).
+  live MCP URLs for **both** teams, and both teams' metadata (`ahk-yosi` vs `amireman`; peer tokens
+  stay in the env, never the file).
 - `config/rate_limits.json` — API Gatekeeper limits (version `1.00`).
 - `config/logging_config.json` — logging.
 
@@ -361,8 +393,9 @@ vision_radius: 3
 After 6 clean sub-games the report is built, persisted, and printed. With `uv run cop-thief --send`
 **and** a `credentials.json` present, it is also emailed to `rmisegal+uoh26b@gmail.com` with a
 **JSON-only** body via the Gmail API (least-privilege `gmail.send` scope). The send path is
-**mockable and fully tested without credentials**; a real live send still needs the team's Google
-OAuth setup (documented in [`docs/PRD_gmail_reporting.md`](docs/PRD_gmail_reporting.md)). Without
+**mockable and fully tested without credentials**, and for the bonus match we performed a **real live
+send** of the §9.2 report to Dr. Segal via OAuth (`gmail.send`), confirmed by the returned Gmail
+message id (setup documented in [`docs/PRD_gmail_reporting.md`](docs/PRD_gmail_reporting.md)). Without
 `credentials.json`, `--send` logs a warning and writes the report without sending (stdout stays pure
 JSON).
 
@@ -391,29 +424,33 @@ Latest local run: **172 passed** (with the `mcp` extra), **0 lint violations**.
   ([`docs/DEPLOY.md`](docs/DEPLOY.md)).
 - **Networked cross-team match** — `HttpTransport`, a us-vs-us reference driver (`cop-thief-remote-match`)
   and a play-our-half driver (`cop-thief-play-side`), both proven live against the deployed servers.
-- §9.1 internal + §9.2 bonus report builders; **mockable** Gmail sender (JSON-only body); team
-  metadata filled (`ahk-yosi`).
+- §9.1 internal + §9.2 bonus report builders; Gmail sender (JSON-only body); team metadata filled
+  (`ahk-yosi`). The §9.2 report was **emailed live** to Dr. Segal (real Gmail send, returned message id).
+- **Bonus match played live vs `amireman`** — full 6-sub-game role-swapping series over the deployed
+  Cloud Run servers; both teams emailed identical §9.2 JSON at the same time (`mutual_agreement: true`,
+  `series_winner: ahk-yosi`, totals 85–45, a 5–1 series).
 - Terminal + browser GUIs with fog views and replay; structured JSONL logging; loopback dry-run
   (`cop-thief-match`) with mirror-and-flag reconciliation.
 - CI, **172 tests**, Ruff clean.
 
-## External inputs still needed
+## External inputs — all in place
 
-Most external inputs are now in place. What's left is **the partner team's side** and a **live Gmail
-send** (full list: [`docs/TODO.md` §External Inputs Needed](docs/TODO.md#external-inputs-needed)):
+Every external dependency the bonus match needed is now satisfied (history:
+[`docs/TODO.md` §External Inputs Needed](docs/TODO.md#external-inputs-needed)):
 
 | Item | Status |
 |---|---|
-| Team name + student names/IDs | ✅ filled — `ahk-yosi` (yosef shanaa, ahmad kaiss) |
+| Team name + student names/IDs | ✅ `ahk-yosi` (yosef shanaa, ahmad kaiss) |
 | Cloud deployment + `MCP_AUTH_TOKEN` | ✅ **live** — both servers on Cloud Run (`me-west1`), bearer-enforced, smoke-verified |
 | LLM provider/model + API key | ✅ wired — OpenAI, `OPENAI_API_KEY` in `.env` |
-| **Partner team + their 2 URLs / 2 tokens / metadata** | ⛔ needed for the real bonus match → `match.mcp_url_group_2_*`, `PEER_*` env, `match.group_2`/`students_group_2` |
-| **Google account + OAuth** (`credentials.json`/`token.json`) | ⛔ needed for a real live Gmail send (sender is mockable + fully tested without it) |
+| Partner team + their 2 URLs / 2 tokens / metadata | ✅ exchanged with **amireman** — `match.mcp_url_group_2_*`, `PEER_*` env, `match.group_2` / `students_group_2` |
+| Google account + OAuth (`credentials.json` / `token.json`) | ✅ set up — used for the **real live §9.2 send** to Dr. Segal |
 
-> Honesty note: the **live cloud deployment is done** (deployed + verified on our Cloud Run account;
-> tokens to be revoked / services deleted after the match). A **live Gmail send** is still not run —
-> the send path is implemented and mock-tested ([`docs/PRD_gmail_reporting.md`](docs/PRD_gmail_reporting.md)),
-> but a real OAuth credential is the remaining external step.
+> The **live cloud deployment** is done (deployed + verified on our Cloud Run account), the **bonus
+> match was played live** against amireman over those servers, and the **§9.2 report was emailed** to
+> Dr. Segal — a real Gmail send, confirmed by the returned message id. Cloud tokens are rotated/revoked
+> and the services deleted after grading; secrets (`.env`, `credentials.json`, `token.json`, keys) are
+> git-ignored and never committed.
 
 ## Project layout
 

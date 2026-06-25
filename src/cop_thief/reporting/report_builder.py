@@ -38,6 +38,14 @@ def compute_bonus_claim(totals_by_group: dict[str, int]) -> dict[str, int]:
     return {team_a: 7, team_b: 10}
 
 
+def compute_series_winner(totals_by_group: dict[str, int]) -> str:
+    """The group with the higher series total; ``"tie"`` on an exact tie."""
+    (team_a, score_a), (team_b, score_b) = totals_by_group.items()
+    if score_a == score_b:
+        return "tie"
+    return team_a if score_a > score_b else team_b
+
+
 def _bonus_sub_games(
     results: list[SubGameResult], attribution: list[dict[str, str]] | None
 ) -> list[dict[str, Any]]:
@@ -77,6 +85,7 @@ def build_bonus_report(
         "sub_games": _bonus_sub_games(results, attribution),
         "totals_by_group": totals_by_group,
         "bonus_claim": compute_bonus_claim(totals_by_group),
+        "series_winner": compute_series_winner(totals_by_group),
         "mutual_agreement": True,
     }
 
