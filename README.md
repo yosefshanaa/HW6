@@ -230,6 +230,13 @@ ASUS (**amireman**, right) running the live match over the deployed MCP servers.
 > The partner's screen is **redacted** in these photos — the live bearer tokens were on it during the
 > token exchange, and those are never published.
 
+Final series output on our side — the six sub-game results, `totals_by_group`, and the emitted §9.2
+report (`series_winner: ahk-yosi`, `mutual_agreement: true`) that was emailed to the grader:
+
+<p align="center">
+  <img src="assets/match_live_output.png" width="80%" alt="Terminal output of the bonus series: six sub-game results, totals (ahk-yosi 85 / amireman 45), and the emitted §9.2 JSON report">
+</p>
+
 ## Expected outputs
 
 Each headless/GUI run writes, under `results/<timestamp>/`:
