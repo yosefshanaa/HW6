@@ -90,6 +90,7 @@ uv sync                 # core + dev dependencies
 uv sync --extra mcp     # + FastMCP — to run the networked MCP servers / match drivers
 uv sync --extra llm     # + OpenAI SDK — only for the LLM / search_llm agents
 uv sync --extra gmail   # + Google client libs — only for real email sending
+uv sync --extra analysis # + Jupyter + Matplotlib — only for the results-analysis notebook
 ```
 
 ## Run
@@ -461,6 +462,7 @@ uv run pytest                 # full test suite (unit + integration)
 uv run pytest --cov           # with coverage (gate: ≥ 85%)
 uv run ruff check             # lint (zero violations required)
 uv run python notebooks/parameter_sweep.py   # local parameter-sensitivity sweep
+uv sync --extra analysis && uv run jupyter lab notebooks/results_analysis.ipynb  # analysis notebook
 ```
 
 Latest local run: **174 passed** (with the `mcp` extra), **0 lint violations** (`ruff check`).
@@ -515,7 +517,7 @@ tests/            unit + integration (mirrors src/)
 config/           config.yaml · config.llm.yaml · config.match.yaml · rate_limits.json · logging_config.json
 docs/             PRD · PLAN · TODO · per-mechanism PRDs · SUBMISSION_REPORT · EXPERIMENTS · …
 prompts/          PROMPT_BOOK · turn_templates
-notebooks/        parameter_sweep.py (local experiment)
+notebooks/        parameter_sweep.py (local experiment) · results_analysis.ipynb (§9.2 analysis notebook)
 results/          per-series logs + report.json (git-ignored)
 ```
 
@@ -532,6 +534,36 @@ results/          per-series logs + report.json (git-ignored)
 | [`docs/QUALITY_MAPPING.md`](docs/QUALITY_MAPPING.md) | ISO/IEC 25010 evidence map |
 | [`prompts/PROMPT_BOOK.md`](prompts/PROMPT_BOOK.md) · [`turn_templates.md`](prompts/turn_templates.md) | Prompt log + LLM turn templates |
 | [`SHARED_MATCH_RULES.md`](SHARED_MATCH_RULES.md) | Shared spec for the inter-group bonus match |
+
+## Contributing
+
+Coding standards this repo holds to (see [`docs/PLAN.md`](docs/PLAN.md) for the full set):
+
+- **uv only** — `uv sync`, `uv run …`; never `pip`/`venv` directly.
+- **Quality gates must stay green** — `uv run ruff check` (zero violations), `uv run pytest --cov`
+  (≥ 85%), and every source/test file ≤ **150 code-lines** (blank/comment lines excluded). Split a
+  file that grows past the limit rather than compressing it.
+- **TDD** — add/adjust tests with the change; new modules ship with a matching `tests/` file.
+- **Architecture** — business logic goes through the **SDK** facade; every external call goes through
+  the **API Gatekeeper**; configuration is read from `config/` + env, never hard-coded.
+- **Git** — branch off `main`, keep commits scoped with clear messages, open a PR; CI must pass.
+
+Run the whole gate locally before pushing:
+
+```bash
+uv run ruff check && uv run pytest --cov
+```
+
+## Credits
+
+- **Team `ahk-yosi`** — Yosef Shanaa (`213314859`) · Ahmad Kaiss (`325811255`).
+- Assignment & guidelines: **Dr. Yoram Segal**, *"Dual AI Agent race via MCP"*.
+- Bonus-match opponent: team **`amireman`** — Amir Fadila · Eman Sarhan.
+- **Third-party libraries** (each under its own license): [FastMCP](https://github.com/jlowin/fastmcp)
+  (MCP servers/transport), [OpenAI Python SDK](https://github.com/openai/openai-python) (LLM agents),
+  Google API client + auth libs (Gmail send), [PyYAML](https://pyyaml.org/) & `jsonschema` (config),
+  and the dev/analysis toolchain — [uv](https://docs.astral.sh/uv/), [Ruff](https://docs.astral.sh/ruff/),
+  [pytest](https://pytest.org/), [Matplotlib](https://matplotlib.org/) & [Jupyter](https://jupyter.org/).
 
 ## License
 
